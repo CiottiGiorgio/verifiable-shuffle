@@ -1,4 +1,5 @@
 import logging
+import os
 
 import algokit_utils
 from algosdk.v2client.algod import AlgodClient
@@ -25,12 +26,11 @@ def deploy(
     )
 
     app_client.deploy(
-        on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
-        on_update=algokit_utils.OnUpdate.AppendApp,
-    )
-    name = "world"
-    response = app_client.hello(name=name)
-    logger.info(
-        f"Called hello on {app_spec.contract.name} ({app_client.app_id}) "
-        f"with name={name}, received: {response.return_value}"
+        version="0.1.0",
+        on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
+        on_update=algokit_utils.OnUpdate.UpdateApp,
+        template_values={
+            "RANDOMNESS_BEACON_ID": int(os.environ.get("RANDOMNESS_BEACON_ID")),
+            "SAFETY_ROUND_GAP": int(os.environ.get("SAFETY_ROUND_GAP")),
+        },
     )

@@ -31,8 +31,8 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/verifiable-giveaway-frontend-ci.yaml
 
-  verifiable-giveaway-frontend-release:
-    name: Run verifiable-giveaway-frontend release
-    secrets: inherit
-    uses: ./.github/workflows/verifiable-giveaway-frontend-cd.yaml
-    needs: verifiable-giveaway-frontend-validate
+#  verifiable-giveaway-frontend-release:
+#    name: Run verifiable-giveaway-frontend release
+#    secrets: inherit
+#    uses: ./.github/workflows/verifiable-giveaway-frontend-cd.yaml
+#    needs: verifiable-giveaway-frontend-validate

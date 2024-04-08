@@ -14,7 +14,7 @@ artifacts = 'smart_contracts/artifacts'
 command = "poetry run python -m smart_contracts deploy"
 environment_secrets = [
   "DEPLOYER_MNEMONIC",
-  "DISPENSER_MNEMONIC",
+#  "DISPENSER_MNEMONIC",
 ]
 
 [project.deploy.localnet]
@@ -33,6 +33,10 @@ audit = { commands = [
   'poetry run pip-audit -r requirements.txt',
 ], description = 'Audit with pip-audit' }
 lint = { commands = [
+  'poetry run black .',
+  'poetry run ruff . --fix',
+], description = 'Perform linting' }
+lint-check = { commands = [
   'poetry run black --check .',
   'poetry run ruff .',
   'poetry run mypy',
