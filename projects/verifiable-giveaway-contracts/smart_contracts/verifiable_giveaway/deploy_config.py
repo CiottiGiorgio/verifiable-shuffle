@@ -26,7 +26,7 @@ def deploy(
     )
 
     app_client.deploy(
-        version="0.1.0",
+        version="0.1.1",
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         on_update=algokit_utils.OnUpdate.UpdateApp,
         template_values={

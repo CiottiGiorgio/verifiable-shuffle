@@ -34,7 +34,7 @@ main_commit_route@2:
     return
 
 main_reveal_route@3:
-    // smart_contracts/verifiable_giveaway/contract.py:69
+    // smart_contracts/verifiable_giveaway/contract.py:70
     // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])
     int 1
     txn OnCompletion
@@ -181,7 +181,7 @@ commit_bool_merge@8:
     frame_dig 0
     <=
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:66
+    // smart_contracts/verifiable_giveaway/contract.py:67
     // Txn.tx_id + block.bytes + participants.bytes + winners.bytes
     txn TxID
     frame_dig -3
@@ -190,11 +190,13 @@ commit_bool_merge@8:
     concat
     frame_dig -1
     concat
-    // smart_contracts/verifiable_giveaway/contract.py:65
+    // smart_contracts/verifiable_giveaway/contract.py:65-66
+    // # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
     // self.active_commitment[Txn.sender] = (
     txn Sender
     byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:65-67
+    // smart_contracts/verifiable_giveaway/contract.py:65-68
+    // # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
     // self.active_commitment[Txn.sender] = (
     //     Txn.tx_id + block.bytes + participants.bytes + winners.bytes
     // )
@@ -205,13 +207,13 @@ commit_bool_merge@8:
 
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.reveal() -> bytes, bytes:
 reveal:
-    // smart_contracts/verifiable_giveaway/contract.py:69-70
+    // smart_contracts/verifiable_giveaway/contract.py:70-71
     // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])
     // def reveal(self) -> tuple[arc4.DynamicBytes, arc4.DynamicArray[arc4.UInt8]]:
     proto 0 2
     byte ""
     dup
-    // smart_contracts/verifiable_giveaway/contract.py:71
+    // smart_contracts/verifiable_giveaway/contract.py:72
     // committed_tx_id = arc4.DynamicBytes(self.active_commitment[Txn.sender][0:32])
     txn Sender
     int 0
@@ -244,7 +246,7 @@ reveal:
     swap
     concat
     dup
-    // smart_contracts/verifiable_giveaway/contract.py:73
+    // smart_contracts/verifiable_giveaway/contract.py:74
     // self.active_commitment[Txn.sender][32:40]
     txn Sender
     int 0
@@ -274,7 +276,7 @@ reveal:
     swap
     select
     substring3
-    // smart_contracts/verifiable_giveaway/contract.py:76
+    // smart_contracts/verifiable_giveaway/contract.py:77
     // self.active_commitment[Txn.sender][40:41]
     txn Sender
     int 0
@@ -304,12 +306,12 @@ reveal:
     swap
     select
     substring3
-    // smart_contracts/verifiable_giveaway/contract.py:75-77
+    // smart_contracts/verifiable_giveaway/contract.py:76-78
     // committed_participants = arc4.UInt8.from_bytes(
     //     self.active_commitment[Txn.sender][40:41]
     // )
     swap
-    // smart_contracts/verifiable_giveaway/contract.py:79
+    // smart_contracts/verifiable_giveaway/contract.py:80
     // self.active_commitment[Txn.sender][41:42]
     txn Sender
     int 0
@@ -340,13 +342,18 @@ reveal:
     select
     substring3
     // smart_contracts/verifiable_giveaway/contract.py:82
+    // del self.active_commitment[Txn.sender]
+    txn Sender
+    byte "active_commitment"
+    app_local_del
+    // smart_contracts/verifiable_giveaway/contract.py:84
     // assert Global.round >= committed_block.native
     global Round
     dig 2
     btoi
     >=
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:84-92
+    // smart_contracts/verifiable_giveaway/contract.py:86-94
     // entropy_call = itxn.ApplicationCall(
     //     app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
     //     app_args=(
@@ -357,14 +364,14 @@ reveal:
     //     fee=0,
     // ).submit()
     itxn_begin
-    // smart_contracts/verifiable_giveaway/contract.py:85
+    // smart_contracts/verifiable_giveaway/contract.py:87
     // app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
     int 1256
-    // smart_contracts/verifiable_giveaway/contract.py:91
+    // smart_contracts/verifiable_giveaway/contract.py:93
     // fee=0,
     int 0
     itxn_field Fee
-    // smart_contracts/verifiable_giveaway/contract.py:87
+    // smart_contracts/verifiable_giveaway/contract.py:89
     // arc4.arc4_signature("must_get(uint64,byte[])byte[]"),
     method "must_get(uint64,byte[])byte[]"
     itxn_field ApplicationArgs
@@ -373,11 +380,11 @@ reveal:
     uncover 3
     itxn_field ApplicationArgs
     itxn_field ApplicationID
-    // smart_contracts/verifiable_giveaway/contract.py:84
+    // smart_contracts/verifiable_giveaway/contract.py:86
     // entropy_call = itxn.ApplicationCall(
     int appl
     itxn_field TypeEnum
-    // smart_contracts/verifiable_giveaway/contract.py:84-92
+    // smart_contracts/verifiable_giveaway/contract.py:86-94
     // entropy_call = itxn.ApplicationCall(
     //     app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
     //     app_args=(
@@ -389,7 +396,7 @@ reveal:
     // ).submit()
     itxn_submit
     itxn LastLog
-    // smart_contracts/verifiable_giveaway/contract.py:94
+    // smart_contracts/verifiable_giveaway/contract.py:96
     // vrf_output = arc4.DynamicBytes.from_log(entropy_call.last_log)
     dup
     extract 4 0
@@ -398,7 +405,7 @@ reveal:
     byte 0x151f7c75
     ==
     assert // ARC4 prefix is valid
-    // smart_contracts/verifiable_giveaway/contract.py:96
+    // smart_contracts/verifiable_giveaway/contract.py:98
     // state1, state2, state3, state4 = pcg128_init(vrf_output.native)
     extract 2 0
     callsub pcg128_init
@@ -406,13 +413,13 @@ reveal:
     cover 4
     cover 3
     cover 2
-    // smart_contracts/verifiable_giveaway/contract.py:105
+    // smart_contracts/verifiable_giveaway/contract.py:107
     // )[: committed_participants.native]
     swap
     btoi
     dup
     cover 2
-    // smart_contracts/verifiable_giveaway/contract.py:98-105
+    // smart_contracts/verifiable_giveaway/contract.py:100-107
     // # Knuth shuffle.
     // # We use a "truncated" version of the algorithm where we stop after "winners" iterations.
     // # The array to be shuffled is an array with the numbers from 1 to "participants".
@@ -433,7 +440,7 @@ reveal:
     uncover 2
     substring3
     cover 2
-    // smart_contracts/verifiable_giveaway/contract.py:111-112
+    // smart_contracts/verifiable_giveaway/contract.py:113-114
     // # We know that, by construction, "winners" <= "participants".
     // if committed_winners.native < committed_participants.native
     swap
@@ -441,7 +448,7 @@ reveal:
     dup
     uncover 2
     <
-    // smart_contracts/verifiable_giveaway/contract.py:110-113
+    // smart_contracts/verifiable_giveaway/contract.py:112-115
     // committed_winners.native
     // # We know that, by construction, "winners" <= "participants".
     // if committed_winners.native < committed_participants.native
@@ -452,48 +459,50 @@ reveal:
     b reveal_ternary_merge@4
 
 reveal_ternary_false@3:
-    // smart_contracts/verifiable_giveaway/contract.py:110-113
+    // smart_contracts/verifiable_giveaway/contract.py:112-115
     // committed_winners.native
     // # We know that, by construction, "winners" <= "participants".
     // if committed_winners.native < committed_participants.native
     // else committed_participants.native - 1
     frame_dig 7
-    // smart_contracts/verifiable_giveaway/contract.py:113
+    // smart_contracts/verifiable_giveaway/contract.py:115
     // else committed_participants.native - 1
     int 1
     -
     frame_bury 1
 
 reveal_ternary_merge@4:
-    // smart_contracts/verifiable_giveaway/contract.py:115
+    // smart_contracts/verifiable_giveaway/contract.py:117-119
+    // # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
+    // #  and the contract should protect the user/funding account.
     // ensure_budget(700 * n_shuffles, OpUpFeeSource.GroupCredit)
     int 700
     frame_dig 1
     *
     int 0
     callsub ensure_budget
-    // smart_contracts/verifiable_giveaway/contract.py:116
+    // smart_contracts/verifiable_giveaway/contract.py:120
     // for i in urange(n_shuffles):
     int 0
     frame_bury 0
 
 reveal_for_header@5:
-    // smart_contracts/verifiable_giveaway/contract.py:116
+    // smart_contracts/verifiable_giveaway/contract.py:120
     // for i in urange(n_shuffles):
     frame_dig 0
     frame_dig 1
     <
     bz reveal_after_for@9
-    // smart_contracts/verifiable_giveaway/contract.py:119
+    // smart_contracts/verifiable_giveaway/contract.py:123
     // BigUInt(i),
     frame_dig 0
     dup
     itob
-    // smart_contracts/verifiable_giveaway/contract.py:120
+    // smart_contracts/verifiable_giveaway/contract.py:124
     // BigUInt(committed_participants.native),
     frame_dig 7
     itob
-    // smart_contracts/verifiable_giveaway/contract.py:117-122
+    // smart_contracts/verifiable_giveaway/contract.py:121-126
     // state1, state2, state3, state4, r_bytes = pcg128_random(
     //     (state1, state2, state3, state4),
     //     BigUInt(i),
@@ -506,10 +515,10 @@ reveal_for_header@5:
     frame_dig 3
     uncover 5
     uncover 5
-    // smart_contracts/verifiable_giveaway/contract.py:121
+    // smart_contracts/verifiable_giveaway/contract.py:125
     // UInt64(1),
     int 1
-    // smart_contracts/verifiable_giveaway/contract.py:117-122
+    // smart_contracts/verifiable_giveaway/contract.py:121-126
     // state1, state2, state3, state4, r_bytes = pcg128_random(
     //     (state1, state2, state3, state4),
     //     BigUInt(i),
@@ -522,34 +531,34 @@ reveal_for_header@5:
     frame_bury 4
     frame_bury 5
     frame_bury 6
-    // smart_contracts/verifiable_giveaway/contract.py:123
+    // smart_contracts/verifiable_giveaway/contract.py:127
     // r = op.getbyte(r_bytes, 17)
     int 17
     getbyte
-    // smart_contracts/verifiable_giveaway/contract.py:124
+    // smart_contracts/verifiable_giveaway/contract.py:128
     // participants_i = op.getbyte(participants, i)
     frame_dig 8
     dup
     dig 3
     getbyte
     cover 3
-    // smart_contracts/verifiable_giveaway/contract.py:125
+    // smart_contracts/verifiable_giveaway/contract.py:129
     // participants_r = op.getbyte(participants, r)
     dup
     dig 2
     getbyte
-    // smart_contracts/verifiable_giveaway/contract.py:126
+    // smart_contracts/verifiable_giveaway/contract.py:130
     // participants = op.setbyte(participants, i, participants_r)
     dig 3
     swap
     setbyte
-    // smart_contracts/verifiable_giveaway/contract.py:127
+    // smart_contracts/verifiable_giveaway/contract.py:131
     // participants = op.setbyte(participants, r, participants_i)
     swap
     uncover 3
     setbyte
     frame_bury 8
-    // smart_contracts/verifiable_giveaway/contract.py:116
+    // smart_contracts/verifiable_giveaway/contract.py:120
     // for i in urange(n_shuffles):
     int 1
     +
@@ -557,14 +566,14 @@ reveal_for_header@5:
     b reveal_for_header@5
 
 reveal_after_for@9:
-    // smart_contracts/verifiable_giveaway/contract.py:130
+    // smart_contracts/verifiable_giveaway/contract.py:134
     // arc4.UInt16(committed_winners.native).bytes
     frame_dig 9
     dup
     itob
     extract 6 2
     swap
-    // smart_contracts/verifiable_giveaway/contract.py:131
+    // smart_contracts/verifiable_giveaway/contract.py:135
     // + participants[: committed_winners.native]
     frame_dig 8
     dup
@@ -579,11 +588,11 @@ reveal_after_for@9:
     int 0
     swap
     substring3
-    // smart_contracts/verifiable_giveaway/contract.py:130-131
+    // smart_contracts/verifiable_giveaway/contract.py:134-135
     // arc4.UInt16(committed_winners.native).bytes
     // + participants[: committed_winners.native]
     concat
-    // smart_contracts/verifiable_giveaway/contract.py:129-132
+    // smart_contracts/verifiable_giveaway/contract.py:133-136
     // return committed_tx_id.copy(), arc4.DynamicArray[arc4.UInt8].from_bytes(
     //     arc4.UInt16(committed_winners.native).bytes
     //     + participants[: committed_winners.native]

@@ -2,7 +2,7 @@
 name = "verifiable-giveaway-contracts"
 version = "0.1.0"
 description = "Algorand smart contracts"
-authors = ["CiottiGiorgio <my@mail.com>"]
+authors = ["Giorgio Ciotti <gciotti.dev@gmail.com"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

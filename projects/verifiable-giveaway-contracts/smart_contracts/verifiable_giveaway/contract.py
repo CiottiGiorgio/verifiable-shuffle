@@ -62,6 +62,7 @@ class VerifiableGiveaway(ARC4Contract):
         assert 2 <= participants.native <= SAFETY_MAX_PARTICIPANTS
         assert winners.native <= participants.native
 
+        # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
         self.active_commitment[Txn.sender] = (
             Txn.tx_id + block.bytes + participants.bytes + winners.bytes
         )
@@ -78,6 +79,7 @@ class VerifiableGiveaway(ARC4Contract):
         committed_winners = arc4.UInt8.from_bytes(
             self.active_commitment[Txn.sender][41:42]
         )
+        del self.active_commitment[Txn.sender]
 
         assert Global.round >= committed_block.native
 
@@ -112,6 +114,8 @@ class VerifiableGiveaway(ARC4Contract):
             if committed_winners.native < committed_participants.native
             else committed_participants.native - 1
         )
+        # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
+        #  and the contract should protect the user/funding account.
         ensure_budget(700 * n_shuffles, OpUpFeeSource.GroupCredit)
         for i in urange(n_shuffles):
             state1, state2, state3, state4, r_bytes = pcg128_random(
