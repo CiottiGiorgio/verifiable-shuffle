@@ -24,11 +24,33 @@ const Home: React.FC<HomeProps> = () => {
       <div className="hero-content text-center rounded-lg p-6 max-w-md bg-white mx-auto">
         <div className="max-w-md">
           <h1 className="text-4xl">
-            Welcome to <div className="font-bold">AlgoKit 🙂</div>
+            Welcome to <div className="font-bold">Verifiable Giveaway</div>
           </h1>
+          <div className="divider" />
+          <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
+            Wallet Connection
+          </button>
+
+          {activeAddress && (
+            <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>
+              Commit & Reveal
+            </button>
+          )}
+          <div className="divider" />
+          <h1 className="text-2xl">Disclaimer</h1>
           <p className="py-6">
-            This starter has been generated using official AlgoKit React template. Refer to the resource below for next steps.
+            This software is distributed under <a href="https://choosealicense.com/licenses/mit/">MIT License</a>.<br />
+            <br />
+            In addition to the conditions of use of this software, the author declares that this software is for demonstration purposes
+            only.
+            <br />
+            <br />
+            While great effort both in research, implementation, and testing was put into this project, the author makes no guarantees on
+            the quality of the statistical properties resulting from the use of this software.
           </p>
+          <div className="divider" />
+          <h1 className="text-2xl">AlgoKit</h1>
+          <p className="py-6">This starter has been generated using official AlgoKit React template.</p>
 
           <div className="grid">
             <a
@@ -37,19 +59,8 @@ const Home: React.FC<HomeProps> = () => {
               target="_blank"
               href="https://github.com/algorandfoundation/algokit-cli"
             >
-              Getting started
+              Learn about AlgoKit
             </a>
-
-            <div className="divider" />
-            <button data-test-id="connect-wallet" className="btn m-2" onClick={toggleWalletModal}>
-              Wallet Connection
-            </button>
-
-            {activeAddress && (
-              <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>
-                Commit & Reveal
-              </button>
-            )}
           </div>
 
           <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
