@@ -2,27 +2,21 @@
 import { useWallet } from '@txnlab/use-wallet'
 import React, { useState } from 'react'
 import ConnectWallet from './components/ConnectWallet'
-import Transact from './components/Transact'
 import AppCalls from './components/AppCalls'
 
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
-  const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
-  const [appCallsDemoModal, setAppCallsDemoModal] = useState<boolean>(false)
+  const [appCallsModal, setAppCallsModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
 
   const toggleWalletModal = () => {
     setOpenWalletModal(!openWalletModal)
   }
 
-  const toggleDemoModal = () => {
-    setOpenDemoModal(!openDemoModal)
-  }
-
   const toggleAppCallsModal = () => {
-    setAppCallsDemoModal(!appCallsDemoModal)
+    setAppCallsModal(!appCallsModal)
   }
 
   return (
@@ -52,21 +46,14 @@ const Home: React.FC<HomeProps> = () => {
             </button>
 
             {activeAddress && (
-              <button data-test-id="transactions-demo" className="btn m-2" onClick={toggleDemoModal}>
-                Transactions Demo
-              </button>
-            )}
-
-            {activeAddress && (
               <button data-test-id="appcalls-demo" className="btn m-2" onClick={toggleAppCallsModal}>
-                Contract Interactions Demo
+                Commit & Reveal
               </button>
             )}
           </div>
 
           <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
-          <Transact openModal={openDemoModal} setModalState={setOpenDemoModal} />
-          <AppCalls openModal={appCallsDemoModal} setModalState={setAppCallsDemoModal} />
+          <AppCalls openModal={appCallsModal} setModalState={setAppCallsModal} />
         </div>
       </div>
     </div>

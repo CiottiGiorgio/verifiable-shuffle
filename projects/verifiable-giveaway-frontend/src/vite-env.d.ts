@@ -17,6 +17,9 @@ interface ImportMetaEnv {
   readonly VITE_KMD_PORT: string
   readonly VITE_KMD_PASSWORD: string
   readonly VITE_KMD_WALLET: string
+
+  readonly VITE_DEPLOYER_ADDRESS: string
+  readonly VITE_RANDOMNESS_BEACON_ID: string
 }
 
 interface ImportMeta {
