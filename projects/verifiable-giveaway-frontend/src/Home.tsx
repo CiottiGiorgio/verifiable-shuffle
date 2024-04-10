@@ -39,14 +39,18 @@ const Home: React.FC<HomeProps> = () => {
           <div className="divider" />
           <h1 className="text-2xl">Disclaimer</h1>
           <p className="py-6">
-            This software is distributed under <a href="https://choosealicense.com/licenses/mit/">MIT License</a>.<br />
+            This software is distributed under{' '}
+            <a href="https://github.com/CiottiGiorgio/verifiable-giveaway/blob/1040e3a78dfc2cefcc7e7ea9f52de33394243c4a/LICENSE">
+              MIT License
+            </a>
+            .<br />
             <br />
-            In addition to the conditions of use of this software, the author declares that this software is for demonstration purposes
-            only.
+            In addition to the conditions of use of this software, <a href="https://github.com/CiottiGiorgio">the author</a> declares that
+            this software is for demonstration purposes only.
             <br />
             <br />
-            While great effort both in research, implementation, and testing was put into this project, the author makes no guarantees on
-            the quality of the statistical properties resulting from the use of this software.
+            While great effort in research, implementation, and testing was put into this project, the author makes no guarantees on the
+            quality of the statistical properties resulting from the use of this software.
           </p>
           <div className="divider" />
           <h1 className="text-2xl">AlgoKit</h1>
