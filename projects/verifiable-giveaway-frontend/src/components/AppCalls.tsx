@@ -70,7 +70,6 @@ const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
         winners: decodeUint64(acBytes.slice(41, 42), 'safe'),
       }
     },
-    retry: 0,
     staleTime: Infinity,
   })
 
