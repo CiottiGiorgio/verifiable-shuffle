@@ -4,10 +4,16 @@ on:
   
   workflow_call:
   
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: verifiable-giveaway-frontend
 
 jobs:
   validate:
     runs-on: 'ubuntu-latest'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,5 +49,25 @@ jobs:
         run: algokit project run test --project-name 'verifiable-giveaway-frontend'
       
 
-      - name: Build
-        run: algokit project run build --project-name 'verifiable-giveaway-frontend'
+      - name: Log in to the Container registry
+        uses: docker/login-action@3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@5
+        with:
+          context: projects/verifiable-giveaway-frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
