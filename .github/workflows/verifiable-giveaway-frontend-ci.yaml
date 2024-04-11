@@ -50,7 +50,7 @@ jobs:
       
 
       - name: Log in to the Container registry
-        uses: docker/login-action@3
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -59,13 +59,13 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@5
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@5
+        uses: docker/build-push-action@v5
         with:
           context: projects/verifiable-giveaway-frontend
           push: true
