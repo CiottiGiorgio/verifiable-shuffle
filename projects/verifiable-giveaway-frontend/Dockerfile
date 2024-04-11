@@ -1,4 +1,7 @@
-FROM node:20 as BUILDER
+# On GH this multi-stage build will fail because of some problem with Actions
+#  and linux/arm64 node:20.
+# This fixes that issue and determines the platform for the build while we still get an arm64 image.
+FROM --platform=linux/amd64 node:20 as BUILDER
 
 WORKDIR /app
 COPY package*.json ./
