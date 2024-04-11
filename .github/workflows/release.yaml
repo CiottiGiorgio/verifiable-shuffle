@@ -12,7 +12,7 @@ on:
 
 permissions:
   contents: read
-  packages: read
+  packages: write
 
 jobs:
   verifiable-giveaway-contracts-validate:
