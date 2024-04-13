@@ -1,6 +1,6 @@
-from importlib.metadata import version
 import logging
 import os
+from importlib.metadata import version
 
 import algokit_utils
 from algosdk.v2client.algod import AlgodClient

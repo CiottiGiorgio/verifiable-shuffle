@@ -64,10 +64,10 @@ class VerifiableGiveaway(ARC4Contract):
         assert 2 <= participants.native
         assert (
             # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-            (winners.native <= 16) or
-            (participants.native <= 80 and winners.native <= 20) or
-            (participants.native <= 47 and winners.native <= 25) or
-            (participants.native <= 35 and winners.native <= 30)
+            (winners.native <= 16)
+            or (participants.native <= 80 and winners.native <= 20)
+            or (participants.native <= 47 and winners.native <= 25)
+            or (participants.native <= 35 and winners.native <= 30)
         )
         assert winners.native <= participants.native
 
