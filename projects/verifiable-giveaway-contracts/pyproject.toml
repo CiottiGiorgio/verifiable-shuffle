@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "verifiable-giveaway-contracts"
-version = "0.1.0"
+version = "0.1.2"
 description = "Algorand smart contracts"
-authors = ["Giorgio Ciotti <gciotti.dev@gmail.com"]
+authors = ["Giorgio Ciotti <gciotti.dev@gmail.com>"]
 readme = "README.md"
+packages = [{include = "smart_contracts"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"

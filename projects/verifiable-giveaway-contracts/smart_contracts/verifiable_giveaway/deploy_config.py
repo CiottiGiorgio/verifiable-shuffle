@@ -1,3 +1,4 @@
+from importlib.metadata import version
 import logging
 import os
 
@@ -26,7 +27,7 @@ def deploy(
     )
 
     app_client.deploy(
-        version="0.1.1",
+        version=version("verifiable-giveaway"),
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         on_update=algokit_utils.OnUpdate.UpdateApp,
         template_values={
