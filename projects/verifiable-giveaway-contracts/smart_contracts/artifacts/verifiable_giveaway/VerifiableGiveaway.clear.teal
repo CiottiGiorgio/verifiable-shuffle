@@ -1,7 +1,7 @@
 #pragma version 10
 
 smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.clear_state_program:
-    // smart_contracts/verifiable_giveaway/contract.py:43
+    // smart_contracts/verifiable_giveaway/contract.py:45
     // class VerifiableGiveaway(ARC4Contract):
     int 1
     return
