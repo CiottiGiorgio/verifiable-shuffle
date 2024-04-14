@@ -27,7 +27,7 @@ def deploy(
     )
 
     app_client.deploy(
-        version=version("verifiable-giveaway"),
+        version=version("verifiable-giveaway-contracts"),
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         on_update=algokit_utils.OnUpdate.UpdateApp,
         template_values={
