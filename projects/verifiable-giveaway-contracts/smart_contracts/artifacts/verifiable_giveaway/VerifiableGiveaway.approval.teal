@@ -148,18 +148,18 @@ commit:
     assert
     // smart_contracts/verifiable_giveaway/contract.py:66-67
     // # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    // (winners.native <= 16) or
+    // (winners.native <= 16)
     int 16
     <=
     // smart_contracts/verifiable_giveaway/contract.py:66-70
     // # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    // (winners.native <= 16) or
-    // (participants.native <= 80 and winners.native <= 20) or
-    // (participants.native <= 47 and winners.native <= 25) or
-    // (participants.native <= 35 and winners.native <= 30)
+    // (winners.native <= 16)
+    // or (participants.native <= 80 and winners.native <= 20)
+    // or (participants.native <= 47 and winners.native <= 25)
+    // or (participants.native <= 35 and winners.native <= 30)
     bnz commit_bool_true@7
     // smart_contracts/verifiable_giveaway/contract.py:68
-    // (participants.native <= 80 and winners.native <= 20) or
+    // or (participants.native <= 80 and winners.native <= 20)
     frame_dig 1
     int 80
     <=
@@ -171,7 +171,7 @@ commit:
 
 commit_or_contd@3:
     // smart_contracts/verifiable_giveaway/contract.py:69
-    // (participants.native <= 47 and winners.native <= 25) or
+    // or (participants.native <= 47 and winners.native <= 25)
     frame_dig 1
     int 47
     <=
@@ -183,7 +183,7 @@ commit_or_contd@3:
 
 commit_or_contd@5:
     // smart_contracts/verifiable_giveaway/contract.py:70
-    // (participants.native <= 35 and winners.native <= 30)
+    // or (participants.native <= 35 and winners.native <= 30)
     frame_dig 1
     int 35
     <=
@@ -204,10 +204,10 @@ commit_bool_merge@9:
     // smart_contracts/verifiable_giveaway/contract.py:65-71
     // assert (
     //     # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    //     (winners.native <= 16) or
-    //     (participants.native <= 80 and winners.native <= 20) or
-    //     (participants.native <= 47 and winners.native <= 25) or
-    //     (participants.native <= 35 and winners.native <= 30)
+    //     (winners.native <= 16)
+    //     or (participants.native <= 80 and winners.native <= 20)
+    //     or (participants.native <= 47 and winners.native <= 25)
+    //     or (participants.native <= 35 and winners.native <= 30)
     // )
     assert
     // smart_contracts/verifiable_giveaway/contract.py:72
