@@ -26,12 +26,17 @@ def deploy(
         indexer_client=indexer_client,
     )
 
+    randomness_beacon_id = os.environ.get("RANDOMNESS_BEACON_ID")
+    safety_round_gap = os.environ.get("SAFETY_ROUND_GAP")
+    if not (randomness_beacon_id and safety_round_gap):
+        raise ValueError
+
     app_client.deploy(
         version=version("verifiable-giveaway-contracts"),
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         on_update=algokit_utils.OnUpdate.UpdateApp,
         template_values={
-            "RANDOMNESS_BEACON_ID": int(os.environ.get("RANDOMNESS_BEACON_ID")),
-            "SAFETY_ROUND_GAP": int(os.environ.get("SAFETY_ROUND_GAP")),
+            "RANDOMNESS_BEACON_ID": int(randomness_beacon_id),
+            "SAFETY_ROUND_GAP": int(safety_round_gap),
         },
     )
