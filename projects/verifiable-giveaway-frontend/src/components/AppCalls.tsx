@@ -19,7 +19,7 @@ interface AppCallsInterface {
 
 const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const [commitmentLength, setCommitmentLength] = useState<string>('')
+  const [commitmentDelay, setCommitmentDelay] = useState<string>('')
   const [commitmentParticipants, setCommitmentParticipants] = useState<string>('')
   const [commitmentWinners, setCommitmentWinners] = useState<string>('')
   const [newCommitmentID, setNewCommitmentID] = useState<string>('')
@@ -81,10 +81,9 @@ const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
       const accountInfo = (await indexer.lookupAccountByID(activeAddress!).do()) as AccountLookupResult
       const accountOptInStatus =
         accountInfo.account['apps-local-state']?.find((localState: AppLocalState) => localState.id === appId) !== undefined
-      const status = await algodClient.status().do()
 
       const commitArgs = {
-        block: BigInt(status['last-round']) + BigInt(commitmentLength),
+        delay: Number(commitmentDelay),
         participants: Number(commitmentParticipants),
         winners: Number(commitmentWinners),
       }
@@ -133,11 +132,11 @@ const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
         <br />
         <input
           type="number"
-          placeholder="Commitment length"
+          placeholder="Commitment delay"
           className="input input-bordered w-full"
-          value={commitmentLength}
+          value={commitmentDelay}
           onChange={(e) => {
-            setCommitmentLength(e.target.value)
+            setCommitmentDelay(e.target.value)
           }}
         />
         <br />

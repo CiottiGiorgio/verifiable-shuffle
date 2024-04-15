@@ -56,9 +56,9 @@ class VerifiableGiveaway(ARC4Contract):
 
     @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
     def commit(
-        self, block: arc4.UInt64, participants: arc4.UInt8, winners: arc4.UInt8
+        self, delay: arc4.UInt8, participants: arc4.UInt8, winners: arc4.UInt8
     ) -> None:
-        assert Global.round <= block.native - TemplateVar[UInt64]("SAFETY_ROUND_GAP")
+        assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
 
         assert 1 <= winners.native
         assert 2 <= participants.native
@@ -73,7 +73,10 @@ class VerifiableGiveaway(ARC4Contract):
 
         # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
         self.active_commitment[Txn.sender] = (
-            Txn.tx_id + block.bytes + participants.bytes + winners.bytes
+            Txn.tx_id
+            + op.itob(Global.round + delay.native)
+            + participants.bytes
+            + winners.bytes
         )
 
     @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])

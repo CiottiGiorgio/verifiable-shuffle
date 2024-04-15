@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "verifiable-giveaway-contracts"
-version = "0.1.2"
+version = "0.1.3"
 description = "Algorand smart contracts"
 authors = ["Giorgio Ciotti <gciotti.dev@gmail.com>"]
 readme = "README.md"
