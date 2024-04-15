@@ -29,6 +29,7 @@ jobs:
 
   verifiable-giveaway-frontend-release:
     permissions:
+      contents: read
       packages: write
     name: Run verifiable-giveaway-frontend release
     secrets: inherit
