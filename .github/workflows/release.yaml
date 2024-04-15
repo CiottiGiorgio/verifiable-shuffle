@@ -10,10 +10,6 @@ on:
       - '.vscode/**'
       - '.idea/**'
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
   verifiable-giveaway-contracts-validate:
     name: Run verifiable-giveaway-contracts release
@@ -31,8 +27,11 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/verifiable-giveaway-frontend-ci.yaml
 
-#  verifiable-giveaway-frontend-release:
-#    name: Run verifiable-giveaway-frontend release
-#    secrets: inherit
-#    uses: ./.github/workflows/verifiable-giveaway-frontend-cd.yaml
-#    needs: verifiable-giveaway-frontend-validate
+  verifiable-giveaway-frontend-release:
+    permissions:
+      contents: read
+      packages: write
+    name: Run verifiable-giveaway-frontend release
+    secrets: inherit
+    uses: ./.github/workflows/verifiable-giveaway-frontend-cd.yaml
+    needs: verifiable-giveaway-frontend-validate
