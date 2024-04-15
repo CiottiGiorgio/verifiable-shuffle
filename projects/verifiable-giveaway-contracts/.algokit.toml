@@ -36,7 +36,7 @@ lint = { commands = [
   'poetry run black .',
   'poetry run ruff . --fix',
 ], description = 'Perform linting' }
-lint-check = { commands = [
+lint-ci = { commands = [
   'poetry run black --check .',
   'poetry run ruff .',
   'poetry run mypy',

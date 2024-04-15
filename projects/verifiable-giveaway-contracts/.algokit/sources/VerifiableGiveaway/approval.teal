@@ -5,7 +5,7 @@ smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.approval_program
     // class VerifiableGiveaway(ARC4Contract):
     txn NumAppArgs
     bz main_bare_routing@6
-    method "commit(uint64,uint8,uint8)void"
+    method "commit(uint8,uint8,uint8)void"
     method "reveal()(byte[],uint8[])"
     txna ApplicationArgs 0
     match main_commit_route@2 main_reveal_route@3
@@ -112,22 +112,21 @@ main_reject_bare_on_completion@10:
     err // reject transaction
 
 
-// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.commit(block: bytes, participants: bytes, winners: bytes) -> void:
+// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.commit(delay: bytes, participants: bytes, winners: bytes) -> void:
 commit:
     // smart_contracts/verifiable_giveaway/contract.py:57-60
     // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
     // def commit(
-    //     self, block: arc4.UInt64, participants: arc4.UInt8, winners: arc4.UInt8
+    //     self, delay: arc4.UInt8, participants: arc4.UInt8, winners: arc4.UInt8
     // ) -> None:
     proto 3 0
     // smart_contracts/verifiable_giveaway/contract.py:61
-    // assert Global.round <= block.native - TemplateVar[UInt64]("SAFETY_ROUND_GAP")
-    global Round
+    // assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
     frame_dig -3
     btoi
+    dup
     int 1
-    -
-    <=
+    >=
     assert
     // smart_contracts/verifiable_giveaway/contract.py:63
     // assert 1 <= winners.native
@@ -148,47 +147,47 @@ commit:
     assert
     // smart_contracts/verifiable_giveaway/contract.py:66-67
     // # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    // (winners.native <= 16) or
+    // (winners.native <= 16)
     int 16
     <=
     // smart_contracts/verifiable_giveaway/contract.py:66-70
     // # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    // (winners.native <= 16) or
-    // (participants.native <= 80 and winners.native <= 20) or
-    // (participants.native <= 47 and winners.native <= 25) or
-    // (participants.native <= 35 and winners.native <= 30)
+    // (winners.native <= 16)
+    // or (participants.native <= 80 and winners.native <= 20)
+    // or (participants.native <= 47 and winners.native <= 25)
+    // or (participants.native <= 35 and winners.native <= 30)
     bnz commit_bool_true@7
     // smart_contracts/verifiable_giveaway/contract.py:68
-    // (participants.native <= 80 and winners.native <= 20) or
-    frame_dig 1
+    // or (participants.native <= 80 and winners.native <= 20)
+    frame_dig 2
     int 80
     <=
     bz commit_or_contd@3
-    frame_dig 0
+    frame_dig 1
     int 20
     <=
     bnz commit_bool_true@7
 
 commit_or_contd@3:
     // smart_contracts/verifiable_giveaway/contract.py:69
-    // (participants.native <= 47 and winners.native <= 25) or
-    frame_dig 1
+    // or (participants.native <= 47 and winners.native <= 25)
+    frame_dig 2
     int 47
     <=
     bz commit_or_contd@5
-    frame_dig 0
+    frame_dig 1
     int 25
     <=
     bnz commit_bool_true@7
 
 commit_or_contd@5:
     // smart_contracts/verifiable_giveaway/contract.py:70
-    // (participants.native <= 35 and winners.native <= 30)
-    frame_dig 1
+    // or (participants.native <= 35 and winners.native <= 30)
+    frame_dig 2
     int 35
     <=
     bz commit_bool_false@8
-    frame_dig 0
+    frame_dig 1
     int 30
     <=
     bz commit_bool_false@8
@@ -204,22 +203,25 @@ commit_bool_merge@9:
     // smart_contracts/verifiable_giveaway/contract.py:65-71
     // assert (
     //     # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    //     (winners.native <= 16) or
-    //     (participants.native <= 80 and winners.native <= 20) or
-    //     (participants.native <= 47 and winners.native <= 25) or
-    //     (participants.native <= 35 and winners.native <= 30)
+    //     (winners.native <= 16)
+    //     or (participants.native <= 80 and winners.native <= 20)
+    //     or (participants.native <= 47 and winners.native <= 25)
+    //     or (participants.native <= 35 and winners.native <= 30)
     // )
     assert
     // smart_contracts/verifiable_giveaway/contract.py:72
     // assert winners.native <= participants.native
-    frame_dig 0
     frame_dig 1
+    frame_dig 2
     <=
     assert
     // smart_contracts/verifiable_giveaway/contract.py:76
-    // Txn.tx_id + block.bytes + participants.bytes + winners.bytes
+    // Txn.tx_id + op.itob(Global.round + delay.native) + participants.bytes + winners.bytes
     txn TxID
-    frame_dig -3
+    global Round
+    frame_dig 0
+    +
+    itob
     concat
     frame_dig -2
     concat
@@ -233,7 +235,7 @@ commit_bool_merge@9:
     // smart_contracts/verifiable_giveaway/contract.py:74-77
     // # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
     // self.active_commitment[Txn.sender] = (
-    //     Txn.tx_id + block.bytes + participants.bytes + winners.bytes
+    //     Txn.tx_id + op.itob(Global.round + delay.native) + participants.bytes + winners.bytes
     // )
     uncover 2
     app_local_put

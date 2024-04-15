@@ -120,10 +120,9 @@ def test_shuffle(
     test_scenario: tuple[int, int, list[int]],
 ) -> None:
     participants, winners, shuffled_winners = test_scenario
-    last_round = algod_client.status()["last-round"]
 
     commit_result = verifiable_giveaway_client.opt_in_commit(
-        block=last_round + 2,
+        delay=1,
         participants=participants,
         winners=winners,
         transaction_parameters=TransactionParameters(
