@@ -21,7 +21,7 @@ mypy = "*"
 pytest = "*"
 pytest-cov = "*"
 pip-audit = "*"
-puyapy = "^1.0.0"
+puyapy = "^2.3.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -45,6 +45,7 @@
                         "name": "user_data"
                     }
                 ],
+                "readonly": false,
                 "returns": {
                     "type": "byte[]"
                 }

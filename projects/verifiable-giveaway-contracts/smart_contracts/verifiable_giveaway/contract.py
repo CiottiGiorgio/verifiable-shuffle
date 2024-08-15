@@ -11,7 +11,6 @@ from algopy import (
     UInt64,
     arc4,
     ensure_budget,
-    itxn,
     op,
     urange,
 )
@@ -95,17 +94,12 @@ class VerifiableGiveaway(ARC4Contract):
 
         assert Global.round >= committed_block.native
 
-        entropy_call = itxn.ApplicationCall(
+        vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
+            "must_get",
+            committed_block,
+            committed_tx_id,
             app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
-            app_args=(
-                arc4.arc4_signature("must_get(uint64,byte[])byte[]"),
-                committed_block.bytes,
-                committed_tx_id.bytes,
-            ),
-            fee=0,
-        ).submit()
-
-        vrf_output = arc4.DynamicBytes.from_log(entropy_call.last_log)
+        )
 
         state1, state2, state3, state4 = pcg128_init(vrf_output.native)
 
