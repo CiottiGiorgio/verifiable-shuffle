@@ -101,7 +101,7 @@ class VerifiableGiveaway(ARC4Contract):
             app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
         )
 
-        state1, state2, state3, state4 = pcg128_init(vrf_output.native)
+        state = pcg128_init(vrf_output.native)
 
         # Knuth shuffle.
         # We use a "truncated" version of the algorithm where we stop after "winners" iterations.
@@ -139,13 +139,13 @@ class VerifiableGiveaway(ARC4Contract):
         #  and the contract should protect the user/funding account.
         ensure_budget(700 * n_shuffles, OpUpFeeSource.GroupCredit)
         for i in urange(n_shuffles):
-            state1, state2, state3, state4, r_bytes = pcg128_random(
-                (state1, state2, state3, state4),
+            state, sequence = pcg128_random(
+                state,
                 BigUInt(i),
                 BigUInt(committed_participants.native),
                 UInt64(1),
             )
-            r = op.getbyte(r_bytes, 17)
+            r = op.getbyte(sequence[0].bytes, 15)
             participants_i = op.getbyte(participants, i)
             participants_r = op.getbyte(participants, r)
             participants = op.setbyte(participants, i, participants_r)
