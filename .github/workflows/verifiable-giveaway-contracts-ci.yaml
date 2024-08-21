@@ -38,7 +38,7 @@ jobs:
         run: algokit project run audit --project-name 'verifiable-giveaway-contracts'
 
       - name: Lint and format python dependencies
-        run: algokit project run ci-lint --project-name 'verifiable-giveaway-contracts'
+        run: algokit project run lint-ci --project-name 'verifiable-giveaway-contracts'
 
       - name: Run tests
         shell: bash

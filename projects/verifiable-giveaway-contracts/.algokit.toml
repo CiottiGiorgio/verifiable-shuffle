@@ -46,7 +46,7 @@ ci-teal-diff = { commands = [
   'git add -N ./smart_contracts/artifacts',
   'git diff --exit-code --minimal ./smart_contracts/artifacts',
 ], description = 'Check TEAL files for differences' }
-ci-lint = { commands = [
+lint-ci = { commands = [
   'poetry run black --check --diff .',
   'poetry run ruff check .',
   'poetry run mypy',
