@@ -1,3 +1,5 @@
+import { DeflyWalletConnect } from '@blockshake/defly-connect'
+import { DaffiWalletConnect } from '@daffiwallet/connect'
 import { PeraWalletConnect } from '@perawallet/connect'
 import { PROVIDER_ID, ProvidersArray, WalletProvider, useInitializeProviders } from '@txnlab/use-wallet'
 import algosdk from 'algosdk'
@@ -23,10 +25,10 @@ if (import.meta.env.VITE_ALGOD_NETWORK === '') {
   ]
 } else {
   providersArray = [
-    // { id: PROVIDER_ID.DEFLY, clientStatic: DeflyWalletConnect },
+    { id: PROVIDER_ID.DEFLY, clientStatic: DeflyWalletConnect },
     { id: PROVIDER_ID.PERA, clientStatic: PeraWalletConnect },
-    // { id: PROVIDER_ID.DAFFI, clientStatic: DaffiWalletConnect },
-    // { id: PROVIDER_ID.EXODUS },
+    { id: PROVIDER_ID.DAFFI, clientStatic: DaffiWalletConnect },
+    { id: PROVIDER_ID.EXODUS },
     // If you are interested in WalletConnect v2 provider
     // refer to https://github.com/TxnLab/use-wallet for detailed integration instructions
   ]

@@ -1,9 +1,9 @@
 name: Validate verifiable-giveaway-frontend
 
 on:
-  
   workflow_call:
-  
+    paths:
+      - "projects/verifiable-giveaway-frontend/**"
 
 jobs:
   validate:
@@ -34,14 +34,11 @@ jobs:
       - name: Install dependencies
         run: algokit project bootstrap all --project-name 'verifiable-giveaway-frontend'
 
-      
       - name: Run linters
-        run: algokit project run lint --project-name 'verifiable-giveaway-frontend'
-      
-      
+        run: algokit project run ci-lint --project-name 'verifiable-giveaway-frontend'
+
       - name: Run unit tests
         run: algokit project run test --project-name 'verifiable-giveaway-frontend'
-      
 
       - name: Build
         run: algokit project run build --project-name 'verifiable-giveaway-frontend'

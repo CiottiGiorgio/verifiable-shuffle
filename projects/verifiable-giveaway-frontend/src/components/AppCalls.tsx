@@ -112,11 +112,9 @@ const AppCalls = ({ openModal, setModalState }: AppCallsInterface) => {
       )
       await latestCommitmentQRefetch()
 
-      const [revealedCommittedID, winners] = response.return!
-
       setNewRevealID(response.transaction.txID())
-      setRevealedCommitmentID(base32.encode(revealedCommittedID).slice(0, 52))
-      setRevealedWinners(winners.toString())
+      setRevealedCommitmentID(base32.encode(response.return!.commitmentTxId).slice(0, 52))
+      setRevealedWinners(response.return!.winners.toString())
     } catch (e) {
       enqueueSnackbar('Reveal failed: try again in 15 seconds.', { variant: `error` })
     } finally {

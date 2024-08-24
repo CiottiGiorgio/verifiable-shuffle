@@ -1,3 +1,5 @@
+from typing import Literal
+
 from algopy import (
     ARC4Contract,
     BigUInt,
@@ -11,7 +13,6 @@ from algopy import (
     UInt64,
     arc4,
     ensure_budget,
-    itxn,
     op,
     urange,
 )
@@ -42,9 +43,23 @@ from lib_pcg import pcg128_init, pcg128_random
 # compute given our entropy level (256 bits of vrf output).
 
 
+class Commitment(arc4.Struct, kw_only=True):
+    commitment_tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
+    committed_block: arc4.UInt64
+    committed_participants: arc4.UInt8
+    committed_winners: arc4.UInt8
+
+
+class RevealOutcome(arc4.Struct, kw_only=True):
+    commitment_tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
+    winners: arc4.DynamicArray[arc4.UInt8]
+
+
 class VerifiableGiveaway(ARC4Contract):
     def __init__(self) -> None:
-        self.active_commitment = LocalState(Bytes)
+        self.randomness_beacon_id = TemplateVar[UInt64]("RANDOMNESS_BEACON_ID")
+        self.safety_gap = TemplateVar[UInt64]("SAFETY_ROUND_GAP")
+        self.active_commitment = LocalState(Commitment)
 
     @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
     def update(self) -> None:
@@ -58,7 +73,7 @@ class VerifiableGiveaway(ARC4Contract):
     def commit(
         self, delay: arc4.UInt8, participants: arc4.UInt8, winners: arc4.UInt8
     ) -> None:
-        assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
+        assert self.safety_gap <= delay.native
 
         assert 1 <= winners.native
         assert 2 <= participants.native
@@ -71,43 +86,33 @@ class VerifiableGiveaway(ARC4Contract):
         )
         assert winners.native <= participants.native
 
-        # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
-        self.active_commitment[Txn.sender] = (
-            Txn.tx_id
-            + op.itob(Global.round + delay.native)
-            + participants.bytes
-            + winners.bytes
+        self.active_commitment[Txn.sender] = Commitment(
+            commitment_tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(
+                Txn.tx_id
+            ),
+            committed_block=arc4.UInt64(Global.round + delay.native),
+            committed_participants=participants,
+            committed_winners=winners,
         )
 
     @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])
-    def reveal(self) -> tuple[arc4.DynamicBytes, arc4.DynamicArray[arc4.UInt8]]:
-        committed_tx_id = arc4.DynamicBytes(self.active_commitment[Txn.sender][0:32])
-        committed_block = arc4.UInt64.from_bytes(
-            self.active_commitment[Txn.sender][32:40]
-        )
-        committed_participants = arc4.UInt8.from_bytes(
-            self.active_commitment[Txn.sender][40:41]
-        )
-        committed_winners = arc4.UInt8.from_bytes(
-            self.active_commitment[Txn.sender][41:42]
-        )
+    def reveal(self) -> RevealOutcome:
+        active_commitment = self.active_commitment[Txn.sender].copy()
         del self.active_commitment[Txn.sender]
 
-        assert Global.round >= committed_block.native
+        committed_participants = active_commitment.committed_participants.native
+        committed_winners = active_commitment.committed_winners.native
 
-        entropy_call = itxn.ApplicationCall(
-            app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
-            app_args=(
-                arc4.arc4_signature("must_get(uint64,byte[])byte[]"),
-                committed_block.bytes,
-                committed_tx_id.bytes,
-            ),
-            fee=0,
-        ).submit()
+        assert Global.round >= active_commitment.committed_block.native
 
-        vrf_output = arc4.DynamicBytes.from_log(entropy_call.last_log)
+        vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
+            "must_get",
+            active_commitment.committed_block,
+            arc4.DynamicBytes(active_commitment.commitment_tx_id.bytes),
+            app_id=self.randomness_beacon_id,
+        )
 
-        state1, state2, state3, state4 = pcg128_init(vrf_output.native)
+        state = pcg128_init(vrf_output.native)
 
         # Knuth shuffle.
         # We use a "truncated" version of the algorithm where we stop after "winners" iterations.
@@ -131,33 +136,35 @@ class VerifiableGiveaway(ARC4Contract):
             "d1d2d3d4d5d6d7d8d9dadbdcdddedfe0"
             "e1e2e3e4e5e6e7e8e9eaebecedeeeff0"
             "f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
-        )[: committed_participants.native]
+        )[:committed_participants]
         # We want to stop after "winners" iterations unless "winners" == "participants"
         #  in which case we want to stop at "participants" - 1.
         # We never need to shuffle the last element because it would just end up in the same position.
         n_shuffles = (
-            committed_winners.native
+            committed_winners
             # We know that, by construction, "winners" <= "participants".
-            if committed_winners.native < committed_participants.native
-            else committed_participants.native - 1
+            if committed_winners < committed_participants
+            else committed_participants - 1
         )
         # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
         #  and the contract should protect the user/funding account.
         ensure_budget(700 * n_shuffles, OpUpFeeSource.GroupCredit)
         for i in urange(n_shuffles):
-            state1, state2, state3, state4, r_bytes = pcg128_random(
-                (state1, state2, state3, state4),
+            state, sequence = pcg128_random(
+                state,
                 BigUInt(i),
-                BigUInt(committed_participants.native),
+                BigUInt(committed_participants),
                 UInt64(1),
             )
-            r = op.getbyte(r_bytes, 17)
+            r = op.getbyte(sequence[0].bytes, 15)
             participants_i = op.getbyte(participants, i)
             participants_r = op.getbyte(participants, r)
             participants = op.setbyte(participants, i, participants_r)
             participants = op.setbyte(participants, r, participants_i)
 
-        return committed_tx_id.copy(), arc4.DynamicArray[arc4.UInt8].from_bytes(
-            arc4.UInt16(committed_winners.native).bytes
-            + participants[: committed_winners.native]
+        return RevealOutcome(
+            commitment_tx_id=active_commitment.commitment_tx_id.copy(),
+            winners=arc4.DynamicArray[arc4.UInt8].from_bytes(
+                arc4.UInt16(committed_winners).bytes + participants[:committed_winners]
+            ),
         )

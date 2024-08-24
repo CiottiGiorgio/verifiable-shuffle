@@ -1,7 +1,0 @@
-#pragma version 10
-
-smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.clear_state_program:
-    // smart_contracts/mock_randomness_beacon/contract.py:5
-    // class MockRandomnessBeacon(ARC4Contract):
-    int 1
-    return

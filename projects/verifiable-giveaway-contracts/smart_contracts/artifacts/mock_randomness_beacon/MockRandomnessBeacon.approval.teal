@@ -1,8 +1,6 @@
 #pragma version 10
 
 smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.approval_program:
-    // smart_contracts/mock_randomness_beacon/contract.py:5
-    // class MockRandomnessBeacon(ARC4Contract):
     txn NumAppArgs
     bz main_bare_routing@5
     method "must_get(uint64,byte[])byte[]"
@@ -11,19 +9,13 @@ smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.approval_pr
     err // reject transaction
 
 main_must_get_route@2:
-    // smart_contracts/mock_randomness_beacon/contract.py:6
-    // @arc4.abimethod
     txn OnCompletion
     !
     assert // OnCompletion is NoOp
     txn ApplicationID
     assert // is not creating
-    // smart_contracts/mock_randomness_beacon/contract.py:5
-    // class MockRandomnessBeacon(ARC4Contract):
     txna ApplicationArgs 1
     txna ApplicationArgs 2
-    // smart_contracts/mock_randomness_beacon/contract.py:6
-    // @arc4.abimethod
     callsub must_get
     byte 0x151f7c75
     swap
@@ -33,8 +25,6 @@ main_must_get_route@2:
     return
 
 main_bare_routing@5:
-    // smart_contracts/mock_randomness_beacon/contract.py:5
-    // class MockRandomnessBeacon(ARC4Contract):
     txn OnCompletion
     !
     assert // reject transaction
@@ -47,16 +37,7 @@ main_bare_routing@5:
 
 // smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.must_get(round: bytes, user_data: bytes) -> bytes:
 must_get:
-    // smart_contracts/mock_randomness_beacon/contract.py:6-11
-    // @arc4.abimethod
-    // def must_get(
-    //     self,
-    //     round: arc4.UInt64,  # noqa: A002
-    //     user_data: arc4.DynamicBytes,
-    // ) -> arc4.DynamicBytes:
     proto 2 1
-    // smart_contracts/mock_randomness_beacon/contract.py:12
-    // return arc4.DynamicBytes(TemplateVar[Bytes]("VRF_OUTPUT"))
     byte TMPL_VRF_OUTPUT
     len
     itob

@@ -1,9 +1,13 @@
 [algokit]
 min_version = "v2.0.0"
 
-[generate.smart_contract]
-description = "Adds new smart contract to existing project"
+[generate.smart-contract]
+description = "Generate a new smart contract for existing project"
 path = ".algokit/generators/create_contract"
+
+[generate.env-file]
+description = "Generate a new generic or Algorand network specific .env file"
+path = ".algokit/generators/create_env_file"
 
 [project]
 type = 'contract'
@@ -34,12 +38,7 @@ audit = { commands = [
 ], description = 'Audit with pip-audit' }
 lint = { commands = [
   'poetry run black .',
-  'poetry run ruff . --fix',
-], description = 'Perform linting' }
-lint-ci = { commands = [
-  'poetry run black --check .',
-  'poetry run ruff .',
-  'poetry run mypy',
+  'poetry run ruff check . --fix',
 ], description = 'Perform linting' }
 audit-teal = { commands = [
   # 🚨 IMPORTANT 🚨: For strict TEAL validation, remove --exclude statements. The default starter contract is not for production. Ensure thorough testing and adherence to best practices in smart contract development. This is not a replacement for a professional audit.
@@ -51,3 +50,8 @@ ci-teal-diff = { commands = [
   'git add -N ./smart_contracts/artifacts',
   'git diff --exit-code --minimal ./smart_contracts/artifacts',
 ], description = 'Check TEAL files for differences' }
+ci-lint = { commands = [
+  'poetry run black --check --diff .',
+  'poetry run ruff check .',
+  'poetry run mypy',
+], description = 'Perform linting' }
