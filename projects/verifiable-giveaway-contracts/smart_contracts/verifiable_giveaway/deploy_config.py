@@ -16,7 +16,7 @@ def deploy(
     app_spec: algokit_utils.ApplicationSpecification,
     deployer: algokit_utils.Account,
 ) -> None:
-    from smart_contracts.artifacts.verifiable_giveaway.client import (
+    from smart_contracts.artifacts.verifiable_giveaway.verifiable_giveaway_client import (
         VerifiableGiveawayClient,
     )
 

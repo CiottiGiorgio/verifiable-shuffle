@@ -8,8 +8,9 @@ This starter full stack project has been generated using AlgoKit. See below for 
 1. Clone this repository to your local machine.
 2. Ensure [Docker](https://www.docker.com/) is installed and operational. Then, install `AlgoKit` following this [guide](https://github.com/algorandfoundation/algokit-cli#install).
 3. Run `algokit project bootstrap all` in the project directory. This command sets up your environment by installing necessary dependencies, setting up a Python virtual environment, and preparing your `.env` file.
-4. To build your project, execute `algokit project run build`. This compiles your project and prepares it for running.
-5. For project-specific instructions, refer to the READMEs of the child projects:
+4. In the case of a smart contract project, execute `algokit generate env-file -a target_network localnet` from the `verifiable-giveaway-contracts` directory to create a `.env.localnet` file with default configuration for `localnet`.
+5. To build your project, execute `algokit project run build`. This compiles your project and prepares it for running.
+6. For project-specific instructions, refer to the READMEs of the child projects:
    - Smart Contracts: [verifiable-giveaway-contracts](projects/verifiable-giveaway-contracts/README.md)
    - Frontend Application: [verifiable-giveaway-frontend](projects/verifiable-giveaway-frontend/README.md)
 
@@ -47,7 +48,7 @@ It has also been configured to have a productive dev experience out of the box i
 Refer to the [verifiable-giveaway-contracts](projects/verifiable-giveaway-contracts/README.md) folder for overview of working with smart contracts, [projects/verifiable-giveaway-frontend](projects/verifiable-giveaway-frontend/README.md) for overview of the React project and the [projects/verifiable-giveaway-frontend/contracts](projects/verifiable-giveaway-frontend/src/contracts/README.md) folder for README on adding new smart contracts from backend as application clients on your frontend. The templates provided in these folders will help you get started.
 When you compile and generate smart contract artifacts, your frontend component will automatically generate typescript application clients from smart contract artifacts and move them to `frontend/src/contracts` folder, see [`generate:app-clients` in package.json](projects/verifiable-giveaway-frontend/package.json). Afterwards, you are free to import and use them in your frontend application.
 
-The frontend starter also provides an example of interactions with your VerifiableGiveawayClient in [`AppCalls.tsx`](projects/verifiable-giveaway-frontend/src/components/AppCalls.tsx) component by default.
+The frontend starter also provides an example of interactions with your HelloWorldClient in [`AppCalls.tsx`](projects/verifiable-giveaway-frontend/src/components/AppCalls.tsx) component by default.
 
 ## Next Steps
 

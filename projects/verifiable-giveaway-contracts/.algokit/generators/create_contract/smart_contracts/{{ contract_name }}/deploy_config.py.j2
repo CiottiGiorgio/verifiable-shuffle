@@ -14,11 +14,11 @@ def deploy(
     app_spec: algokit_utils.ApplicationSpecification,
     deployer: algokit_utils.Account,
 ) -> None:
-    from smart_contracts.artifacts.verifiable_giveaway.client import (
-        VerifiableGiveawayClient,
+    from smart_contracts.artifacts.{{ contract_name }}.{{ contract_name }}_client import (
+        {{ contract_name.split('_')|map('capitalize')|join }}Client,
     )
 
-    app_client = VerifiableGiveawayClient(
+    app_client = {{ contract_name.split('_')|map('capitalize')|join }}Client(
         algod_client,
         creator=deployer,
         indexer_client=indexer_client,

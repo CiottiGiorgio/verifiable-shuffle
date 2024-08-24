@@ -1,19 +1,20 @@
 #pragma version 10
 
 smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.approval_program:
-    // smart_contracts/verifiable_giveaway/contract.py:44
-    // class VerifiableGiveaway(ARC4Contract):
+    txn ApplicationID
+    bnz main_entrypoint@2
+    callsub __init__
+
+main_entrypoint@2:
     txn NumAppArgs
-    bz main_bare_routing@6
+    bz main_bare_routing@8
     method "commit(uint8,uint8,uint8)void"
-    method "reveal()(byte[],uint8[])"
+    method "reveal()(byte[32],uint8[])"
     txna ApplicationArgs 0
-    match main_commit_route@2 main_reveal_route@3
+    match main_commit_route@4 main_reveal_route@5
     err // reject transaction
 
-main_commit_route@2:
-    // smart_contracts/verifiable_giveaway/contract.py:56
-    // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
+main_commit_route@4:
     int 1
     txn OnCompletion
     shl
@@ -22,20 +23,14 @@ main_commit_route@2:
     assert // OnCompletion is one of NoOp, OptIn
     txn ApplicationID
     assert // is not creating
-    // smart_contracts/verifiable_giveaway/contract.py:44
-    // class VerifiableGiveaway(ARC4Contract):
     txna ApplicationArgs 1
     txna ApplicationArgs 2
     txna ApplicationArgs 3
-    // smart_contracts/verifiable_giveaway/contract.py:56
-    // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
     callsub commit
     int 1
     return
 
-main_reveal_route@3:
-    // smart_contracts/verifiable_giveaway/contract.py:81
-    // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])
+main_reveal_route@5:
     int 1
     txn OnCompletion
     shl
@@ -45,20 +40,6 @@ main_reveal_route@3:
     txn ApplicationID
     assert // is not creating
     callsub reveal
-    swap
-    dup
-    len
-    int 4
-    +
-    itob
-    extract 6 2
-    byte 0x0004
-    swap
-    concat
-    swap
-    concat
-    swap
-    concat
     byte 0x151f7c75
     swap
     concat
@@ -66,78 +47,55 @@ main_reveal_route@3:
     int 1
     return
 
-main_bare_routing@6:
-    // smart_contracts/verifiable_giveaway/contract.py:44
-    // class VerifiableGiveaway(ARC4Contract):
+main_bare_routing@8:
     txn OnCompletion
-    switch main_create@7 main_reject_bare_on_completion@10 main_reject_bare_on_completion@10 main_reject_bare_on_completion@10 main_update@8 main_delete@9
+    switch main_create@9 main_reject_bare_on_completion@12 main_reject_bare_on_completion@12 main_reject_bare_on_completion@12 main_update@10 main_delete@11
     err // reject transaction
 
-main_create@7:
-    // smart_contracts/verifiable_giveaway/contract.py:44
-    // class VerifiableGiveaway(ARC4Contract):
+main_create@9:
     txn ApplicationID
     !
     assert // is creating
     int 1
     return
 
-main_update@8:
-    // smart_contracts/verifiable_giveaway/contract.py:48
-    // @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
+main_update@10:
     txn ApplicationID
     assert // is not creating
-    // smart_contracts/verifiable_giveaway/contract.py:48-49
-    // @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
-    // def update(self) -> None:
     callsub update
     int 1
     return
 
-main_delete@9:
-    // smart_contracts/verifiable_giveaway/contract.py:52
-    // @arc4.baremethod(allow_actions=[OnCompleteAction.DeleteApplication])
+main_delete@11:
     txn ApplicationID
     assert // is not creating
-    // smart_contracts/verifiable_giveaway/contract.py:52-53
-    // @arc4.baremethod(allow_actions=[OnCompleteAction.DeleteApplication])
-    // def delete(self) -> None:
     callsub delete
     int 1
     return
 
-main_reject_bare_on_completion@10:
-    // smart_contracts/verifiable_giveaway/contract.py:44
-    // class VerifiableGiveaway(ARC4Contract):
+main_reject_bare_on_completion@12:
     err // reject transaction
 
 
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.commit(delay: bytes, participants: bytes, winners: bytes) -> void:
 commit:
-    // smart_contracts/verifiable_giveaway/contract.py:56-59
-    // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
-    // def commit(
-    //     self, delay: arc4.UInt8, participants: arc4.UInt8, winners: arc4.UInt8
-    // ) -> None:
     proto 3 0
-    // smart_contracts/verifiable_giveaway/contract.py:60
-    // assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
+    int 0
+    byte "safety_gap"
+    app_global_get_ex
+    assert // check self.safety_gap exists
     frame_dig -3
     btoi
     dup
-    int TMPL_SAFETY_ROUND_GAP
-    >=
+    cover 2
+    <=
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:62
-    // assert 1 <= winners.native
     frame_dig -1
     btoi
     dupn 2
     int 1
     >=
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:63
-    // assert 2 <= participants.native
     frame_dig -2
     btoi
     dup
@@ -145,20 +103,9 @@ commit:
     int 2
     >=
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:65-66
-    // # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    // (winners.native <= 16)
     int 16
     <=
-    // smart_contracts/verifiable_giveaway/contract.py:65-69
-    // # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    // (winners.native <= 16)
-    // or (participants.native <= 80 and winners.native <= 20)
-    // or (participants.native <= 47 and winners.native <= 25)
-    // or (participants.native <= 35 and winners.native <= 30)
     bnz commit_bool_true@7
-    // smart_contracts/verifiable_giveaway/contract.py:67
-    // or (participants.native <= 80 and winners.native <= 20)
     frame_dig 2
     int 80
     <=
@@ -169,8 +116,6 @@ commit:
     bnz commit_bool_true@7
 
 commit_or_contd@3:
-    // smart_contracts/verifiable_giveaway/contract.py:68
-    // or (participants.native <= 47 and winners.native <= 25)
     frame_dig 2
     int 47
     <=
@@ -181,8 +126,6 @@ commit_or_contd@3:
     bnz commit_bool_true@7
 
 commit_or_contd@5:
-    // smart_contracts/verifiable_giveaway/contract.py:69
-    // or (participants.native <= 35 and winners.native <= 30)
     frame_dig 2
     int 35
     <=
@@ -200,240 +143,79 @@ commit_bool_false@8:
     int 0
 
 commit_bool_merge@9:
-    // smart_contracts/verifiable_giveaway/contract.py:64-70
-    // assert (
-    //     # We don't need to actually check that participants is <= 255 because participants is arc4.UInt8
-    //     (winners.native <= 16)
-    //     or (participants.native <= 80 and winners.native <= 20)
-    //     or (participants.native <= 47 and winners.native <= 25)
-    //     or (participants.native <= 35 and winners.native <= 30)
-    // )
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:71
-    // assert winners.native <= participants.native
     frame_dig 1
     frame_dig 2
     <=
     assert
-    // smart_contracts/verifiable_giveaway/contract.py:75
-    // Txn.tx_id
     txn TxID
-    // smart_contracts/verifiable_giveaway/contract.py:76
-    // + op.itob(Global.round + delay.native)
     global Round
     frame_dig 0
     +
     itob
-    // smart_contracts/verifiable_giveaway/contract.py:75-76
-    // Txn.tx_id
-    // + op.itob(Global.round + delay.native)
     concat
-    // smart_contracts/verifiable_giveaway/contract.py:75-77
-    // Txn.tx_id
-    // + op.itob(Global.round + delay.native)
-    // + participants.bytes
     frame_dig -2
     concat
-    // smart_contracts/verifiable_giveaway/contract.py:73-74
-    // # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
-    // self.active_commitment[Txn.sender] = (
-    txn Sender
-    swap
-    // smart_contracts/verifiable_giveaway/contract.py:75-78
-    // Txn.tx_id
-    // + op.itob(Global.round + delay.native)
-    // + participants.bytes
-    // + winners.bytes
     frame_dig -1
     concat
-    // smart_contracts/verifiable_giveaway/contract.py:46
-    // self.active_commitment = LocalState(Bytes)
+    txn Sender
     byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:73-79
-    // # FIXME: It would be best to use a struct so that we have easier decoding off-chain.
-    // self.active_commitment[Txn.sender] = (
-    //     Txn.tx_id
-    //     + op.itob(Global.round + delay.native)
-    //     + participants.bytes
-    //     + winners.bytes
-    // )
-    swap
+    uncover 2
     app_local_put
     retsub
 
 
-// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.reveal() -> bytes, bytes:
+// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.reveal() -> bytes:
 reveal:
-    // smart_contracts/verifiable_giveaway/contract.py:81-82
-    // @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])
-    // def reveal(self) -> tuple[arc4.DynamicBytes, arc4.DynamicArray[arc4.UInt8]]:
-    proto 0 2
+    proto 0 1
     byte ""
     dup
-    // smart_contracts/verifiable_giveaway/contract.py:83
-    // committed_tx_id = arc4.DynamicBytes(self.active_commitment[Txn.sender][0:32])
     txn Sender
     int 0
-    // smart_contracts/verifiable_giveaway/contract.py:46
-    // self.active_commitment = LocalState(Bytes)
     byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:83
-    // committed_tx_id = arc4.DynamicBytes(self.active_commitment[Txn.sender][0:32])
     app_local_get_ex
     assert // check self.active_commitment exists for account
+    txn Sender
+    byte "active_commitment"
+    app_local_del
     dup
-    len
-    int 0
-    dig 1
-    >=
-    int 0
-    dig 2
+    extract 40 1 // on error: Index access is out of bounds
+    btoi
+    dup
     uncover 2
-    select
-    swap
-    int 32
+    dup
+    extract 41 1 // on error: Index access is out of bounds
+    btoi
+    dup
+    cover 3
+    cover 3
+    global Round
     dig 1
-    >=
-    int 32
-    cover 2
-    select
-    substring3
+    extract 32 8 // on error: Index access is out of bounds
+    dup
+    btoi
+    uncover 2
+    <=
+    assert
+    itxn_begin
+    swap
+    extract 0 32 // on error: Index access is out of bounds
+    dup
+    cover 4
     dup
     len
     itob
     extract 6 2
     swap
     concat
-    dup
-    // smart_contracts/verifiable_giveaway/contract.py:85
-    // self.active_commitment[Txn.sender][32:40]
-    txn Sender
     int 0
-    // smart_contracts/verifiable_giveaway/contract.py:46
-    // self.active_commitment = LocalState(Bytes)
-    byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:85
-    // self.active_commitment[Txn.sender][32:40]
-    app_local_get_ex
-    assert // check self.active_commitment exists for account
-    dup
-    len
-    int 32
-    dig 1
-    >=
-    int 32
-    dig 2
-    uncover 2
-    select
-    swap
-    int 40
-    dig 1
-    >=
-    int 40
-    cover 2
-    select
-    substring3
-    // smart_contracts/verifiable_giveaway/contract.py:88
-    // self.active_commitment[Txn.sender][40:41]
-    txn Sender
-    int 0
-    // smart_contracts/verifiable_giveaway/contract.py:46
-    // self.active_commitment = LocalState(Bytes)
-    byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:88
-    // self.active_commitment[Txn.sender][40:41]
-    app_local_get_ex
-    assert // check self.active_commitment exists for account
-    dup
-    len
-    int 40
-    dig 1
-    >=
-    int 40
-    dig 2
-    uncover 2
-    select
-    swap
-    int 41
-    dig 1
-    >=
-    int 41
-    cover 2
-    select
-    substring3
-    // smart_contracts/verifiable_giveaway/contract.py:87-89
-    // committed_participants = arc4.UInt8.from_bytes(
-    //     self.active_commitment[Txn.sender][40:41]
-    // )
-    swap
-    // smart_contracts/verifiable_giveaway/contract.py:91
-    // self.active_commitment[Txn.sender][41:42]
-    txn Sender
-    int 0
-    // smart_contracts/verifiable_giveaway/contract.py:46
-    // self.active_commitment = LocalState(Bytes)
-    byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:91
-    // self.active_commitment[Txn.sender][41:42]
-    app_local_get_ex
-    assert // check self.active_commitment exists for account
-    dup
-    len
-    int 41
-    dig 1
-    >=
-    int 41
-    dig 2
-    uncover 2
-    select
-    swap
-    int 42
-    dig 1
-    >=
-    int 42
-    cover 2
-    select
-    substring3
-    // smart_contracts/verifiable_giveaway/contract.py:93
-    // del self.active_commitment[Txn.sender]
-    txn Sender
-    // smart_contracts/verifiable_giveaway/contract.py:46
-    // self.active_commitment = LocalState(Bytes)
-    byte "active_commitment"
-    // smart_contracts/verifiable_giveaway/contract.py:93
-    // del self.active_commitment[Txn.sender]
-    app_local_del
-    // smart_contracts/verifiable_giveaway/contract.py:95
-    // assert Global.round >= committed_block.native
-    global Round
-    dig 2
-    btoi
-    >=
-    assert
-    // smart_contracts/verifiable_giveaway/contract.py:97-102
-    // vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
-    //     "must_get",
-    //     committed_block,
-    //     committed_tx_id,
-    //     app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
-    // )
-    itxn_begin
-    // smart_contracts/verifiable_giveaway/contract.py:101
-    // app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
-    int TMPL_RANDOMNESS_BEACON_ID
+    byte "randomness_beacon_id"
+    app_global_get_ex
+    assert // check self.randomness_beacon_id exists
     itxn_field ApplicationID
-    // smart_contracts/verifiable_giveaway/contract.py:97-102
-    // vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
-    //     "must_get",
-    //     committed_block,
-    //     committed_tx_id,
-    //     app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
-    // )
     method "must_get(uint64,byte[])byte[]"
     itxn_field ApplicationArgs
-    swap
     itxn_field ApplicationArgs
-    uncover 2
     itxn_field ApplicationArgs
     int appl
     itxn_field TypeEnum
@@ -448,44 +230,12 @@ reveal:
     byte 0x151f7c75
     ==
     assert // ARC4 prefix is valid
-    // smart_contracts/verifiable_giveaway/contract.py:104
-    // state = pcg128_init(vrf_output.native)
     extract 2 0
     callsub pcg128_init
     cover 5
     cover 4
     cover 3
     cover 2
-    // smart_contracts/verifiable_giveaway/contract.py:128
-    // )[: committed_participants.native]
-    swap
-    btoi
-    dup
-    cover 2
-    // smart_contracts/verifiable_giveaway/contract.py:106-128
-    // # Knuth shuffle.
-    // # We use a "truncated" version of the algorithm where we stop after "winners" iterations.
-    // # The array to be shuffled is an array with the numbers from 1 to "participants".
-    // # Since we have constrained "participants", we can populate the array in constant time
-    // #  by slicing a pre-computed bytearray with numbers from 1 to 255 (arc4.UInt8 max value).
-    // participants = Bytes.from_hex(
-    //     "0102030405060708090a0b0c0d0e0f10"
-    //     "1112131415161718191a1b1c1d1e1f20"
-    //     "2122232425262728292a2b2c2d2e2f30"
-    //     "3132333435363738393a3b3c3d3e3f40"
-    //     "4142434445464748494a4b4c4d4e4f50"
-    //     "5152535455565758595a5b5c5d5e5f60"
-    //     "6162636465666768696a6b6c6d6e6f70"
-    //     "7172737475767778797a7b7c7d7e7f80"
-    //     "8182838485868788898a8b8c8d8e8f90"
-    //     "9192939495969798999a9b9c9d9e9fa0"
-    //     "a1a2a3a4a5a6a7a8a9aaabacadaeafb0"
-    //     "b1b2b3b4b5b6b7b8b9babbbcbdbebfc0"
-    //     "c1c2c3c4c5c6c7c8c9cacbcccdcecfd0"
-    //     "d1d2d3d4d5d6d7d8d9dadbdcdddedfe0"
-    //     "e1e2e3e4e5e6e7e8e9eaebecedeeeff0"
-    //     "f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
-    // )[: committed_participants.native]
     dup
     int 255
     >=
@@ -498,139 +248,81 @@ reveal:
     uncover 2
     substring3
     cover 2
-    // smart_contracts/verifiable_giveaway/contract.py:134-135
-    // # We know that, by construction, "winners" <= "participants".
-    // if committed_winners.native < committed_participants.native
-    swap
-    btoi
-    dup
-    uncover 2
     <
-    // smart_contracts/verifiable_giveaway/contract.py:133-136
-    // committed_winners.native
-    // # We know that, by construction, "winners" <= "participants".
-    // if committed_winners.native < committed_participants.native
-    // else committed_participants.native - 1
     bz reveal_ternary_false@3
-    frame_dig 9
+    frame_dig 3
     frame_bury 1
     b reveal_ternary_merge@4
 
 reveal_ternary_false@3:
-    // smart_contracts/verifiable_giveaway/contract.py:136
-    // else committed_participants.native - 1
-    frame_dig 7
+    frame_dig 2
     int 1
     -
     frame_bury 1
 
 reveal_ternary_merge@4:
-    // smart_contracts/verifiable_giveaway/contract.py:138-140
-    // # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
-    // #  and the contract should protect the user/funding account.
-    // ensure_budget(700 * n_shuffles, OpUpFeeSource.GroupCredit)
     int 700
     frame_dig 1
     *
     int 0
     callsub ensure_budget
-    // smart_contracts/verifiable_giveaway/contract.py:141
-    // for i in urange(n_shuffles):
     int 0
     frame_bury 0
 
 reveal_for_header@5:
-    // smart_contracts/verifiable_giveaway/contract.py:141
-    // for i in urange(n_shuffles):
     frame_dig 0
     frame_dig 1
     <
     bz reveal_after_for@8
-    // smart_contracts/verifiable_giveaway/contract.py:144
-    // BigUInt(i),
     frame_dig 0
     dup
     itob
-    // smart_contracts/verifiable_giveaway/contract.py:145
-    // BigUInt(committed_participants.native),
-    frame_dig 7
+    frame_dig 2
     itob
-    // smart_contracts/verifiable_giveaway/contract.py:142-147
-    // state, sequence = pcg128_random(
-    //     state,
-    //     BigUInt(i),
-    //     BigUInt(committed_participants.native),
-    //     UInt64(1),
-    // )
+    frame_dig 8
+    frame_dig 7
     frame_dig 6
     frame_dig 5
-    frame_dig 4
-    frame_dig 3
     uncover 5
     uncover 5
-    // smart_contracts/verifiable_giveaway/contract.py:146
-    // UInt64(1),
     int 1
-    // smart_contracts/verifiable_giveaway/contract.py:142-147
-    // state, sequence = pcg128_random(
-    //     state,
-    //     BigUInt(i),
-    //     BigUInt(committed_participants.native),
-    //     UInt64(1),
-    // )
     callsub pcg128_random
     cover 4
-    frame_bury 3
-    frame_bury 4
     frame_bury 5
     frame_bury 6
-    // smart_contracts/verifiable_giveaway/contract.py:148
-    // r = op.getbyte(sequence[0].bytes, 15)
+    frame_bury 7
+    frame_bury 8
     extract 2 0
     extract 0 16 // on error: Index access is out of bounds
     int 15
     getbyte
-    // smart_contracts/verifiable_giveaway/contract.py:149
-    // participants_i = op.getbyte(participants, i)
-    frame_dig 8
+    frame_dig 9
     dup
     dig 3
     getbyte
     cover 3
-    // smart_contracts/verifiable_giveaway/contract.py:150
-    // participants_r = op.getbyte(participants, r)
     dup
     dig 2
     getbyte
-    // smart_contracts/verifiable_giveaway/contract.py:151
-    // participants = op.setbyte(participants, i, participants_r)
     dig 3
     swap
     setbyte
-    // smart_contracts/verifiable_giveaway/contract.py:152
-    // participants = op.setbyte(participants, r, participants_i)
     swap
     uncover 3
     setbyte
-    frame_bury 8
-    // smart_contracts/verifiable_giveaway/contract.py:141
-    // for i in urange(n_shuffles):
+    frame_bury 9
     int 1
     +
     frame_bury 0
     b reveal_for_header@5
 
 reveal_after_for@8:
-    // smart_contracts/verifiable_giveaway/contract.py:155
-    // arc4.UInt16(committed_winners.native).bytes
-    frame_dig 9
+    frame_dig 3
     dup
     itob
     extract 6 2
     swap
-    // smart_contracts/verifiable_giveaway/contract.py:156
-    // + participants[: committed_winners.native]
-    frame_dig 8
+    frame_dig 9
     dup
     cover 2
     len
@@ -640,90 +332,56 @@ reveal_after_for@8:
     int 0
     swap
     substring3
-    // smart_contracts/verifiable_giveaway/contract.py:155-156
-    // arc4.UInt16(committed_winners.native).bytes
-    // + participants[: committed_winners.native]
     concat
-    // smart_contracts/verifiable_giveaway/contract.py:154-157
-    // return committed_tx_id.copy(), arc4.DynamicArray[arc4.UInt8].from_bytes(
-    //     arc4.UInt16(committed_winners.native).bytes
-    //     + participants[: committed_winners.native]
-    // )
-    frame_dig 2
+    frame_dig 4
+    byte 0x0022
+    concat
+    swap
+    concat
     frame_bury 0
-    frame_bury 1
     retsub
 
 
 // lib_pcg.pcg128.pcg128_init(seed: bytes) -> uint64, uint64, uint64, uint64:
 pcg128_init:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:20-21
-    // @subroutine
-    // def pcg128_init(seed: Bytes) -> PCG128STATE:
     proto 1 4
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:31
-    // assert seed.length == 32
     frame_dig -1
     len
     int 32
     ==
     assert
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:34
-    // __pcg32_init(op.extract_uint64(seed, 0), UInt64(PCG_FIRST_INCREMENT)),
     frame_dig -1
     int 0
     extract_uint64
     int 1442695040888963407
     callsub __pcg32_init
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:35
-    // __pcg32_init(op.extract_uint64(seed, 8), UInt64(PCG_SECOND_INCREMENT)),
     frame_dig -1
     int 8
     extract_uint64
     int 1442695040888963409
     callsub __pcg32_init
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:36
-    // __pcg32_init(op.extract_uint64(seed, 16), UInt64(PCG_THIRD_INCREMENT)),
     frame_dig -1
     int 16
     extract_uint64
     int 1442695040888963411
     callsub __pcg32_init
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:37
-    // __pcg32_init(op.extract_uint64(seed, 24), UInt64(PCG_FOURTH_INCREMENT)),
     frame_dig -1
     int 24
     extract_uint64
     int 1442695040888963413
     callsub __pcg32_init
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:33-38
-    // return (
-    //     __pcg32_init(op.extract_uint64(seed, 0), UInt64(PCG_FIRST_INCREMENT)),
-    //     __pcg32_init(op.extract_uint64(seed, 8), UInt64(PCG_SECOND_INCREMENT)),
-    //     __pcg32_init(op.extract_uint64(seed, 16), UInt64(PCG_THIRD_INCREMENT)),
-    //     __pcg32_init(op.extract_uint64(seed, 24), UInt64(PCG_FOURTH_INCREMENT)),
-    // )
     retsub
 
 
 // lib_pcg.pcg32.__pcg32_init(initial_state: uint64, incr: uint64) -> uint64:
 __pcg32_init:
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:139-140
-    // @subroutine
-    // def __pcg32_init(initial_state: PCG32STATE, incr: UInt64) -> PCG32STATE:
     proto 2 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:155
-    // state = __pcg32_step(UInt64(0), incr)
     int 0
     frame_dig -1
     callsub __pcg32_step
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:156
-    // _high_addw, state = op.addw(state, initial_state)
     frame_dig -2
     addw
     bury 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:158
-    // return __pcg32_step(state, incr)
     frame_dig -1
     callsub __pcg32_step
     retsub
@@ -731,73 +389,52 @@ __pcg32_init:
 
 // lib_pcg.pcg32.__pcg32_step(state: uint64, incr: uint64) -> uint64:
 __pcg32_step:
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:161-162
-    // @subroutine
-    // def __pcg32_step(state: PCG32STATE, incr: UInt64) -> PCG32STATE:
     proto 2 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:173
-    // _high_mul, low_mul = op.mulw(state, PCG_MULTIPLIER)
     frame_dig -2
     int 6364136223846793005
     mulw
     bury 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:174
-    // _high_add, low_add = op.addw(low_mul, incr)
     frame_dig -1
     addw
     bury 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:176
-    // return low_add
     retsub
 
 
 // algopy.ensure_budget(required_budget: uint64, fee_source: uint64) -> void:
 ensure_budget:
-    // <algopy>/algopy.py:11-17
     proto 2 0
-    // <algopy>/algopy.py:18
     frame_dig -2
     int 10
     +
 
 ensure_budget_while_top@1:
-    // <algopy>/algopy.py:19
     frame_dig 0
     global OpcodeBudget
     >
     bz ensure_budget_after_while@7
-    // <algopy>/algopy.py:20
     itxn_begin
-    // <algopy>/algopy.py:21
     int appl
     itxn_field TypeEnum
-    // <algopy>/algopy.py:22
     int DeleteApplication
     itxn_field OnCompletion
-    // <algopy>/algopy.py:23
     byte 0x068101
     itxn_field ApprovalProgram
-    // <algopy>/algopy.py:24
     byte 0x068101
     itxn_field ClearStateProgram
-    // <algopy>/algopy.py:25-29
     frame_dig -1
     switch ensure_budget_switch_case_0@3 ensure_budget_switch_case_1@4
     b ensure_budget_switch_case_next@6
 
 ensure_budget_switch_case_0@3:
-    // <algopy>/algopy.py:27
     int 0
     itxn_field Fee
     b ensure_budget_switch_case_next@6
 
 ensure_budget_switch_case_1@4:
-    // <algopy>/algopy.py:29
     global MinTxnFee
     itxn_field Fee
 
 ensure_budget_switch_case_next@6:
-    // <algopy>/algopy.py:30
     itxn_submit
     b ensure_budget_while_top@1
 
@@ -807,23 +444,11 @@ ensure_budget_after_while@7:
 
 // lib_pcg.pcg128.pcg128_random(state.0: uint64, state.1: uint64, state.2: uint64, state.3: uint64, lower_bound: bytes, upper_bound: bytes, length: uint64) -> uint64, uint64, uint64, uint64, bytes:
 pcg128_random:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:41-47
-    // @subroutine
-    // def pcg128_random(
-    //     state: PCG128STATE,
-    //     lower_bound: BigUInt,
-    //     upper_bound: BigUInt,
-    //     length: UInt64,
-    // ) -> tuple[PCG128STATE, arc4.DynamicArray[arc4.UInt128]]:
     proto 7 5
     int 0
     dupn 2
     byte ""
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:66
-    // result = arc4.DynamicArray[arc4.UInt128]()
     byte 0x0000
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:68
-    // if lower_bound == 0 and upper_bound == 0:
     frame_dig -3
     byte 0x
     b==
@@ -832,20 +457,14 @@ pcg128_random:
     byte 0x
     b==
     bz pcg128_random_else_body@7
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:69
-    // for i in urange(length):  # noqa: B007
     int 0
     frame_bury 3
 
 pcg128_random_for_header@3:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:69
-    // for i in urange(length):  # noqa: B007
     frame_dig 3
     frame_dig -1
     <
     bz pcg128_random_after_if_else@20
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:70
-    // state, n = __pcg128_unbounded_random(state)
     frame_dig -7
     frame_dig -6
     frame_dig -5
@@ -856,8 +475,6 @@ pcg128_random_for_header@3:
     frame_bury -5
     frame_bury -6
     frame_bury -7
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:72
-    // result.append(arc4.UInt128(n))
     frame_dig 4
     extract 2 0
     swap
@@ -879,8 +496,6 @@ pcg128_random_for_header@3:
     swap
     concat
     frame_bury 4
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:69
-    // for i in urange(length):  # noqa: B007
     frame_dig 3
     int 1
     +
@@ -888,34 +503,24 @@ pcg128_random_for_header@3:
     b pcg128_random_for_header@3
 
 pcg128_random_else_body@7:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:74
-    // if upper_bound != 0:
     frame_dig -2
     byte 0x
     b!=
     bz pcg128_random_else_body@9
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:75
-    // assert upper_bound > BigUInt(1)
     frame_dig -2
     byte 0x01
     b>
     assert
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:76
-    // assert upper_bound < BigUInt(1 << 128)
     frame_dig -2
     byte 0x0100000000000000000000000000000000
     b<
     assert
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:77
-    // assert lower_bound < upper_bound - BigUInt(1)
     frame_dig -2
     byte 0x01
     b-
     frame_dig -3
     b>
     assert
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:79
-    // absolute_bound = upper_bound - lower_bound
     frame_dig -2
     frame_dig -3
     b-
@@ -923,44 +528,32 @@ pcg128_random_else_body@7:
     b pcg128_random_after_if_else@10
 
 pcg128_random_else_body@9:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:81
-    // assert lower_bound < BigUInt(1 << 128 - 1)
     frame_dig -3
     byte 0x80000000000000000000000000000000
     b<
     assert
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:83
-    // absolute_bound = BigUInt(1 << 128) - lower_bound
     byte 0x0100000000000000000000000000000000
     frame_dig -3
     b-
     frame_bury 0
 
 pcg128_random_after_if_else@10:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:85
-    // threshold = __uint128_twos(absolute_bound) % absolute_bound
     frame_dig 0
     dup
     callsub __uint128_twos
     swap
     b%
     frame_bury 2
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:87
-    // for i in urange(length):  # noqa: B007
     int 0
     frame_bury 3
 
 pcg128_random_for_header@11:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:87
-    // for i in urange(length):  # noqa: B007
     frame_dig 3
     frame_dig -1
     <
     bz pcg128_random_after_for@19
 
 pcg128_random_while_top@13:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:89
-    // state, candidate = __pcg128_unbounded_random(state)
     frame_dig -7
     frame_dig -6
     frame_dig -5
@@ -973,19 +566,11 @@ pcg128_random_while_top@13:
     frame_bury -5
     frame_bury -6
     frame_bury -7
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:90
-    // if candidate >= threshold:
     frame_dig 2
     b>=
     bz pcg128_random_while_top@13
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:91-93
-    // result.append(
-    //     arc4.UInt128((candidate % absolute_bound) + lower_bound)
-    // )
     frame_dig 4
     extract 2 0
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:92
-    // arc4.UInt128((candidate % absolute_bound) + lower_bound)
     frame_dig 1
     frame_dig 0
     b%
@@ -999,10 +584,6 @@ pcg128_random_while_top@13:
     int 16
     bzero
     b|
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:91-93
-    // result.append(
-    //     arc4.UInt128((candidate % absolute_bound) + lower_bound)
-    // )
     concat
     dup
     len
@@ -1013,8 +594,6 @@ pcg128_random_while_top@13:
     swap
     concat
     frame_bury 4
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:87
-    // for i in urange(length):  # noqa: B007
     frame_dig 3
     int 1
     +
@@ -1024,8 +603,6 @@ pcg128_random_while_top@13:
 pcg128_random_after_for@19:
 
 pcg128_random_after_if_else@20:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:96
-    // return state, result.copy()
     frame_dig -7
     frame_dig -6
     frame_dig -5
@@ -1041,59 +618,34 @@ pcg128_random_after_if_else@20:
 
 // lib_pcg.pcg128.__pcg128_unbounded_random(state.0: uint64, state.1: uint64, state.2: uint64, state.3: uint64) -> uint64, uint64, uint64, uint64, bytes:
 __pcg128_unbounded_random:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:99-100
-    // @subroutine
-    // def __pcg128_unbounded_random(state: PCG128STATE) -> tuple[PCG128STATE, BigUInt]:
     proto 4 5
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:114
-    // new_state1 = __pcg32_step(state[0], UInt64(PCG_FIRST_INCREMENT))
     frame_dig -4
     int 1442695040888963407
     callsub __pcg32_step
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:117
-    // state[1], UInt64(PCG_SECOND_INCREMENT) << (new_state1 == 0)
     dup
     !
     int 1442695040888963409
     swap
     shl
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:116-118
-    // new_state2 = __pcg32_step(
-    //     state[1], UInt64(PCG_SECOND_INCREMENT) << (new_state1 == 0)
-    // )
     frame_dig -3
     swap
     callsub __pcg32_step
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:121
-    // state[2], UInt64(PCG_THIRD_INCREMENT) << (new_state2 == 0)
     dup
     !
     int 1442695040888963411
     swap
     shl
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:120-122
-    // new_state3 = __pcg32_step(
-    //     state[2], UInt64(PCG_THIRD_INCREMENT) << (new_state2 == 0)
-    // )
     frame_dig -2
     swap
     callsub __pcg32_step
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:125
-    // state[3], UInt64(PCG_FOURTH_INCREMENT) << (new_state3 == 0)
     dup
     !
     int 1442695040888963413
     swap
     shl
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:124-126
-    // new_state4 = __pcg32_step(
-    //     state[3], UInt64(PCG_FOURTH_INCREMENT) << (new_state3 == 0)
-    // )
     frame_dig -1
     swap
     callsub __pcg32_step
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:131
-    // op.itob(__pcg32_output(state[0]) << 32 | __pcg32_output(state[1]))
     frame_dig -4
     callsub __pcg32_output
     int 32
@@ -1102,8 +654,6 @@ __pcg128_unbounded_random:
     callsub __pcg32_output
     |
     itob
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:132
-    // + op.itob(__pcg32_output(state[2]) << 32 | __pcg32_output(state[3]))
     frame_dig -2
     callsub __pcg32_output
     int 32
@@ -1112,35 +662,13 @@ __pcg128_unbounded_random:
     callsub __pcg32_output
     |
     itob
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:131-132
-    // op.itob(__pcg32_output(state[0]) << 32 | __pcg32_output(state[1]))
-    // + op.itob(__pcg32_output(state[2]) << 32 | __pcg32_output(state[3]))
     concat
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:128-134
-    // return (
-    //     (new_state1, new_state2, new_state3, new_state4),
-    //     BigUInt.from_bytes(
-    //         op.itob(__pcg32_output(state[0]) << 32 | __pcg32_output(state[1]))
-    //         + op.itob(__pcg32_output(state[2]) << 32 | __pcg32_output(state[3]))
-    //     ),
-    // )
     retsub
 
 
 // lib_pcg.pcg32.__pcg32_output(state: uint64) -> uint64:
 __pcg32_output:
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:275-276
-    // @subroutine
-    // def __pcg32_output(state: PCG32STATE) -> UInt64:
     proto 1 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:278-284
-    // # Original body of the function with more abstraction:
-    // # xorshifted = __mask_to_uint32(((state >> 18) ^ state) >> 27)
-    // # rot = state >> 59
-    // # return (xorshifted >> rot) | __mask_to_uint32(
-    // #     xorshifted << (__uint64_twos(rot) & 31)
-    // # )
-    // xorshifted = (((state >> 18) ^ state) >> 27) & ((1 << 32) - 1)
     frame_dig -1
     int 18
     shr
@@ -1150,20 +678,14 @@ __pcg32_output:
     shr
     int 4294967295
     &
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:285
-    // rot = state >> 59
     frame_dig -1
     int 59
     shr
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:286
-    // _high_twos_rot, low_twos_rot = op.addw(~rot, 1)
     dup
     ~
     int 1
     addw
     bury 1
-    // .venv/Lib/site-packages/lib_pcg/pcg32.py:287
-    // return (xorshifted >> rot) | ((xorshifted << (low_twos_rot & 31)) & ((1 << 32) - 1))
     dig 2
     uncover 2
     shr
@@ -1179,12 +701,7 @@ __pcg32_output:
 
 // lib_pcg.pcg128.__uint128_twos(value: bytes) -> bytes:
 __uint128_twos:
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:137-138
-    // @subroutine
-    // def __uint128_twos(value: BigUInt) -> BigUInt:
     proto 1 1
-    // .venv/Lib/site-packages/lib_pcg/pcg128.py:160
-    // return (BigUInt.from_bytes(~value.bytes) + 1) & BigUInt((1 << 128) - 1)
     frame_dig -1
     b~
     byte 0x01
@@ -1196,12 +713,7 @@ __uint128_twos:
 
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.update() -> void:
 update:
-    // smart_contracts/verifiable_giveaway/contract.py:48-49
-    // @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
-    // def update(self) -> None:
     proto 0 0
-    // smart_contracts/verifiable_giveaway/contract.py:50
-    // assert Txn.sender == Global.creator_address
     txn Sender
     global CreatorAddress
     ==
@@ -1211,14 +723,21 @@ update:
 
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.delete() -> void:
 delete:
-    // smart_contracts/verifiable_giveaway/contract.py:52-53
-    // @arc4.baremethod(allow_actions=[OnCompleteAction.DeleteApplication])
-    // def delete(self) -> None:
     proto 0 0
-    // smart_contracts/verifiable_giveaway/contract.py:54
-    // assert Txn.sender == Global.creator_address
     txn Sender
     global CreatorAddress
     ==
     assert
+    retsub
+
+
+// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.__init__() -> void:
+__init__:
+    proto 0 0
+    byte "randomness_beacon_id"
+    int TMPL_RANDOMNESS_BEACON_ID
+    app_global_put
+    byte "safety_gap"
+    int TMPL_SAFETY_ROUND_GAP
+    app_global_put
     retsub

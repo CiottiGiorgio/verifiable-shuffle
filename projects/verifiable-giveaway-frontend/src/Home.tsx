@@ -61,7 +61,7 @@ const Home: React.FC<HomeProps> = () => {
               data-test-id="getting-started"
               className="btn btn-primary m-2"
               target="_blank"
-              href="https://github.com/algorandfoundation/algokit-cli"
+              href="http://algokit.io"
             >
               Learn about AlgoKit
             </a>

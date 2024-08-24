@@ -1,0 +1,12 @@
+name: Pull Request validation
+
+on:
+  pull_request:
+    paths:
+      - "projects/verifiable-giveaway-frontend/**"
+
+
+jobs:
+  verifiable-giveaway-frontend-ci:
+    name: Run verifiable-giveaway-frontend validation
+    uses: ./.github/workflows/verifiable-giveaway-frontend-ci.yaml

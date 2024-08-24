@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'projects/verifiable-giveaway-contracts/**'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  verifiable-giveaway-contracts-validate:
+    name: Run verifiable-giveaway-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/verifiable-giveaway-contracts-ci.yaml
+
+  verifiable-giveaway-contracts-release:
+    name: Run verifiable-giveaway-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/verifiable-giveaway-contracts-cd.yaml
+    needs: verifiable-giveaway-contracts-validate

@@ -9,4 +9,6 @@ artifacts = "src/contracts"
 [project.run]
 build = { commands = ['npm run build'], description = 'Build frontend' }
 test = { commands = ['npm run test'], description = 'Run frontend tests' }
-lint = { commands = ['npm run lint'], description = 'Lint frontend code' }
+lint = { commands = ['npm run lint:fix'], description = 'Fix frontend code' }
+
+ci-lint = { commands = ['npm run lint'], description = 'Lint frontend code' }

@@ -2,23 +2,23 @@ import base64
 import hashlib
 
 import algokit_utils
-import algosdk.account
 import pytest
 from algokit_utils import (
-    Account,
     DeployResponse,
     EnsureBalanceParameters,
     TransactionParameters,
     get_localnet_default_account,
 )
+from algokit_utils.beta.account_manager import AddressAndSigner
+from algokit_utils.beta.algorand_client import AlgorandClient
 from algokit_utils.config import config
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
-from smart_contracts.artifacts.mock_randomness_beacon.client import (
+from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
     MockRandomnessBeaconClient,
 )
-from smart_contracts.artifacts.verifiable_giveaway.client import (
+from smart_contracts.artifacts.verifiable_giveaway.verifiable_giveaway_client import (
     VerifiableGiveawayClient,
 )
 
@@ -26,10 +26,10 @@ from smart_contracts.artifacts.verifiable_giveaway.client import (
 @pytest.fixture(scope="session")
 def mock_randomness_beacon_deployment(
     algod_client: AlgodClient, indexer_client: IndexerClient
-) -> tuple[DeployResponse, MockRandomnessBeaconClient]:
+) -> DeployResponse:
     config.configure(
         debug=True,
-        trace_all=True,
+        # trace_all=True,
     )
 
     client = MockRandomnessBeaconClient(
@@ -38,32 +38,27 @@ def mock_randomness_beacon_deployment(
         indexer_client=indexer_client,
     )
 
-    deploy_response = client.deploy(
+    return client.deploy(
         on_schema_break=algokit_utils.OnSchemaBreak.Fail,
         on_update=algokit_utils.OnUpdate.AppendApp,
         template_values={
             "VRF_OUTPUT": hashlib.sha3_256(b"NOT-SO-RANDOM-DATA").digest()
         },
     )
-    return deploy_response, client
 
 
 @pytest.fixture(scope="session")
 def verifiable_giveaway_client(
     algod_client: AlgodClient,
     indexer_client: IndexerClient,
-    mock_randomness_beacon_deployment: tuple[
-        DeployResponse, MockRandomnessBeaconClient
-    ],
+    mock_randomness_beacon_deployment: DeployResponse,
 ) -> VerifiableGiveawayClient:
-    mbr_deployment, _ = mock_randomness_beacon_deployment
-
     client = VerifiableGiveawayClient(
         algod_client,
         creator=get_localnet_default_account(algod_client),
         indexer_client=indexer_client,
         template_values={
-            "RANDOMNESS_BEACON_ID": mbr_deployment.app.app_id,
+            "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
             "SAFETY_ROUND_GAP": 1,
         },
     )
@@ -73,17 +68,17 @@ def verifiable_giveaway_client(
 
 
 @pytest.fixture(scope="session")
-def user_account(algod_client: AlgodClient) -> Account:
-    sk, address = algosdk.account.generate_account()
-    account = Account(private_key=sk, address=address)
+def user_account(algorand_client: AlgorandClient) -> AddressAndSigner:
+    acct = algorand_client.account.random()
+
     algokit_utils.ensure_funded(
-        algod_client,
+        algorand_client.client.algod,
         EnsureBalanceParameters(
-            account_to_fund=account, min_spending_balance_micro_algos=10_000_000
+            account_to_fund=acct.address, min_spending_balance_micro_algos=10_000_000
         ),
     )
 
-    return account
+    return acct
 
 
 # These test cases are not derived from a reference implementation but rather just used to detect instability
@@ -111,12 +106,10 @@ def user_account(algod_client: AlgodClient) -> Account:
     ],
 )
 def test_shuffle(
-    algod_client: AlgodClient,
+    algorand_client: AlgorandClient,
     verifiable_giveaway_client: VerifiableGiveawayClient,
-    mock_randomness_beacon_deployment: tuple[
-        DeployResponse, MockRandomnessBeaconClient
-    ],
-    user_account: Account,
+    mock_randomness_beacon_deployment: DeployResponse,
+    user_account: AddressAndSigner,
     test_scenario: tuple[int, int, list[int]],
 ) -> None:
     participants, winners, shuffled_winners = test_scenario
@@ -132,8 +125,7 @@ def test_shuffle(
 
     assert commit_result.confirmed_round
 
-    mrb_deployment, _ = mock_randomness_beacon_deployment
-    sp = algod_client.suggested_params()
+    sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
     sp.fee = 2_000 + winners * 1_000 + 1_000
 
@@ -142,13 +134,13 @@ def test_shuffle(
             signer=user_account.signer,
             sender=user_account.address,
             suggested_params=sp,
-            foreign_apps=[mrb_deployment.app.app_id],
+            foreign_apps=[mock_randomness_beacon_deployment.app.app_id],
         )
     )
-    revealed_commit_tx_id, revealed_winners = reveal_result.return_value
+    reveal_outcome = reveal_result.return_value
 
     assert (
-        base64.b32encode(bytes(revealed_commit_tx_id)).decode().strip("=")
+        base64.b32encode(bytes(reveal_outcome.commitment_tx_id)).decode().strip("=")
         == commit_result.tx_id
     )
-    assert revealed_winners == shuffled_winners
+    assert reveal_outcome.winners == shuffled_winners
