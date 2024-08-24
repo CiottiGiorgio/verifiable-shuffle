@@ -28,7 +28,7 @@ def deploy(
 
     randomness_beacon_id = os.environ.get("RANDOMNESS_BEACON_ID")
     safety_round_gap = os.environ.get("SAFETY_ROUND_GAP")
-    if not (randomness_beacon_id and safety_round_gap):
+    if not randomness_beacon_id or not safety_round_gap:
         raise ValueError
 
     app_client.deploy(

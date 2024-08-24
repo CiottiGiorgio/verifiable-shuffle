@@ -57,8 +57,6 @@ class RevealOutcome(arc4.Struct, kw_only=True):
 
 class VerifiableGiveaway(ARC4Contract):
     def __init__(self) -> None:
-        self.randomness_beacon_id = TemplateVar[UInt64]("RANDOMNESS_BEACON_ID")
-        self.safety_gap = TemplateVar[UInt64]("SAFETY_ROUND_GAP")
         self.active_commitment = LocalState(Commitment)
 
     @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
@@ -73,7 +71,7 @@ class VerifiableGiveaway(ARC4Contract):
     def commit(
         self, delay: arc4.UInt8, participants: arc4.UInt8, winners: arc4.UInt8
     ) -> None:
-        assert self.safety_gap <= delay.native
+        assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
 
         assert 1 <= winners.native
         assert 2 <= participants.native
@@ -109,7 +107,7 @@ class VerifiableGiveaway(ARC4Contract):
             "must_get",
             active_commitment.committed_block,
             arc4.DynamicBytes(active_commitment.commitment_tx_id.bytes),
-            app_id=self.randomness_beacon_id,
+            app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
         )
 
         state = pcg128_init(vrf_output.native)
