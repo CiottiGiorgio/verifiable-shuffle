@@ -106,7 +106,7 @@ class VerifiableGiveaway(ARC4Contract):
         vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
             "must_get",
             active_commitment.committed_block,
-            arc4.DynamicBytes(active_commitment.commitment_tx_id.bytes),
+            active_commitment.commitment_tx_id.bytes,
             app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
         )
 
