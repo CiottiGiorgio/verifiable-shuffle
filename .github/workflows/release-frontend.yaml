@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-        - 'projects/verifiable-giveaway-frontend/**'
+      - 'projects/verifiable-giveaway-frontend/**'
 
 permissions:
   contents: read
