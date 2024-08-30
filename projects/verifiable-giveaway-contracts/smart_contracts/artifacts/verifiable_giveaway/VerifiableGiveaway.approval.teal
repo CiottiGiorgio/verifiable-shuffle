@@ -170,17 +170,17 @@ commit_for_header@1:
     |
     frame_dig 1
     +
+    dup
     frame_bury 1
+    int 131072
+    <=
+    assert
     int 1
     +
     frame_bury 3
     b commit_for_header@1
 
 commit_after_for@4:
-    frame_dig 1
-    int 131072
-    <=
-    assert
     txn TxID
     global Round
     frame_dig 0

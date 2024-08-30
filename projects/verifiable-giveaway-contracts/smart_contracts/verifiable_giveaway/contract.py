@@ -168,7 +168,8 @@ class VerifiableGiveaway(ARC4Contract):
         ):
             # We want to take an upper bound on the approximated logarithm.
             sum_of_logs += binary_logarithm(i) | UInt64(1)
-        assert sum_of_logs <= (128 << LOGARITHM_FRACTIONAL_PRECISION)
+            # Fail fast.
+            assert sum_of_logs <= (128 << LOGARITHM_FRACTIONAL_PRECISION)
 
         self.commitment[Txn.sender] = Commitment(
             tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(Txn.tx_id),
