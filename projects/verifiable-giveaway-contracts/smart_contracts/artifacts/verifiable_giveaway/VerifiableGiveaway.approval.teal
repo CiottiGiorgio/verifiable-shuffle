@@ -2,14 +2,46 @@
 
 smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.approval_program:
     txn NumAppArgs
-    bz main_bare_routing@6
-    method "commit(uint8,uint8,uint8)void"
-    method "reveal()(byte[32],uint8[])"
+    bz main_bare_routing@8
+    method "get_templated_randomness_beacon_id()uint64"
+    method "get_templated_safety_round_gap()uint64"
+    method "commit(uint8,uint16,uint16)void"
+    method "reveal()(byte[32],uint16[])"
     txna ApplicationArgs 0
-    match main_commit_route@2 main_reveal_route@3
+    match main_get_templated_randomness_beacon_id_route@2 main_get_templated_safety_round_gap_route@3 main_commit_route@4 main_reveal_route@5
     err // reject transaction
 
-main_commit_route@2:
+main_get_templated_randomness_beacon_id_route@2:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    callsub get_templated_randomness_beacon_id
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_get_templated_safety_round_gap_route@3:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    callsub get_templated_safety_round_gap
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_commit_route@4:
     int 1
     txn OnCompletion
     shl
@@ -25,7 +57,7 @@ main_commit_route@2:
     int 1
     return
 
-main_reveal_route@3:
+main_reveal_route@5:
     int 1
     txn OnCompletion
     shl
@@ -42,34 +74,48 @@ main_reveal_route@3:
     int 1
     return
 
-main_bare_routing@6:
+main_bare_routing@8:
     txn OnCompletion
-    switch main_create@7 main_reject_bare_on_completion@10 main_reject_bare_on_completion@10 main_reject_bare_on_completion@10 main_update@8 main_delete@9
+    switch main_create@9 main_reject_bare_on_completion@12 main_reject_bare_on_completion@12 main_reject_bare_on_completion@12 main_update@10 main_delete@11
     err // reject transaction
 
-main_create@7:
+main_create@9:
     txn ApplicationID
     !
     assert // is creating
     int 1
     return
 
-main_update@8:
+main_update@10:
     txn ApplicationID
     assert // is not creating
     callsub update
     int 1
     return
 
-main_delete@9:
+main_delete@11:
     txn ApplicationID
     assert // is not creating
     callsub delete
     int 1
     return
 
-main_reject_bare_on_completion@10:
+main_reject_bare_on_completion@12:
     err // reject transaction
+
+
+// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.get_templated_randomness_beacon_id() -> uint64:
+get_templated_randomness_beacon_id:
+    proto 0 1
+    int TMPL_RANDOMNESS_BEACON_ID
+    retsub
+
+
+// smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.get_templated_safety_round_gap() -> uint64:
+get_templated_safety_round_gap:
+    proto 0 1
+    int TMPL_SAFETY_ROUND_GAP
+    retsub
 
 
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.commit(delay: bytes, participants: bytes, winners: bytes) -> void:
@@ -83,60 +129,54 @@ commit:
     assert
     frame_dig -1
     btoi
-    dupn 2
+    dup
     int 1
     >=
     assert
     frame_dig -2
     btoi
     dup
-    cover 2
     int 2
     >=
     assert
-    int 16
+    dup2
     <=
-    bnz commit_bool_true@7
-    frame_dig 2
-    int 80
-    <=
-    bz commit_or_contd@3
-    frame_dig 1
-    int 20
-    <=
-    bnz commit_bool_true@7
-
-commit_or_contd@3:
-    frame_dig 2
-    int 47
-    <=
-    bz commit_or_contd@5
-    frame_dig 1
-    int 25
-    <=
-    bnz commit_bool_true@7
-
-commit_or_contd@5:
-    frame_dig 2
-    int 35
-    <=
-    bz commit_bool_false@8
-    frame_dig 1
-    int 30
-    <=
-    bz commit_bool_false@8
-
-commit_bool_true@7:
-    int 1
-    b commit_bool_merge@9
-
-commit_bool_false@8:
-    int 0
-
-commit_bool_merge@9:
     assert
-    frame_dig 1
+    int 1400
+    dig 2
+    *
+    int 0
+    callsub ensure_budget
+    int 0
+    cover 2
+    dup
+    int 1
+    +
+    cover 2
+    swap
+    -
+    int 1
+    +
+
+commit_for_header@1:
+    frame_dig 3
     frame_dig 2
+    <
+    bz commit_after_for@4
+    frame_dig 3
+    dup
+    callsub binary_logarithm
+    frame_dig 1
+    +
+    frame_bury 1
+    int 1
+    +
+    frame_bury 3
+    b commit_for_header@1
+
+commit_after_for@4:
+    frame_dig 1
+    int 131072
     <=
     assert
     txn TxID
@@ -156,11 +196,148 @@ commit_bool_merge@9:
     retsub
 
 
+// algopy.ensure_budget(required_budget: uint64, fee_source: uint64) -> void:
+ensure_budget:
+    proto 2 0
+    frame_dig -2
+    int 10
+    +
+
+ensure_budget_while_top@1:
+    frame_dig 0
+    global OpcodeBudget
+    >
+    bz ensure_budget_after_while@7
+    itxn_begin
+    int appl
+    itxn_field TypeEnum
+    int DeleteApplication
+    itxn_field OnCompletion
+    byte 0x068101
+    itxn_field ApprovalProgram
+    byte 0x068101
+    itxn_field ClearStateProgram
+    frame_dig -1
+    switch ensure_budget_switch_case_0@3 ensure_budget_switch_case_1@4
+    b ensure_budget_switch_case_next@6
+
+ensure_budget_switch_case_0@3:
+    int 0
+    itxn_field Fee
+    b ensure_budget_switch_case_next@6
+
+ensure_budget_switch_case_1@4:
+    global MinTxnFee
+    itxn_field Fee
+
+ensure_budget_switch_case_next@6:
+    itxn_submit
+    b ensure_budget_while_top@1
+
+ensure_budget_after_while@7:
+    retsub
+
+
+// smart_contracts.verifiable_giveaway.contract.binary_logarithm(n: uint64) -> uint64:
+binary_logarithm:
+    proto 1 1
+    int 0
+    dupn 2
+    byte ""
+    frame_dig -1
+    bitlen
+    int 1
+    -
+    dup
+    int 0
+    swap
+    int 1
+    swap
+    shl
+    dup
+    frame_dig -1
+    ==
+    bz binary_logarithm_after_if_else@2
+    int 0
+    frame_bury 0
+    retsub
+
+binary_logarithm_after_if_else@2:
+    frame_dig -1
+    itob
+    frame_bury 0
+    int 0
+    frame_bury 3
+
+binary_logarithm_for_header@3:
+    frame_dig 3
+    int 10
+    <
+    bz binary_logarithm_after_for@9
+    frame_dig 0
+    dup
+    b*
+    frame_dig 6
+    itob
+    dup
+    frame_bury 1
+    b/
+    dup
+    frame_bury 0
+    int 2
+    frame_dig 4
+    shl
+    itob
+    dup
+    frame_bury 2
+    b>=
+    bz binary_logarithm_else_body@6
+    frame_dig 5
+    int 1
+    shl
+    int 1
+    |
+    frame_bury 5
+    frame_dig 0
+    frame_dig 1
+    b*
+    frame_dig 2
+    b/
+    frame_bury 0
+    b binary_logarithm_after_if_else@7
+
+binary_logarithm_else_body@6:
+    frame_dig 5
+    int 1
+    shl
+    frame_bury 5
+
+binary_logarithm_after_if_else@7:
+    frame_dig 3
+    int 1
+    +
+    frame_bury 3
+    b binary_logarithm_for_header@3
+
+binary_logarithm_after_for@9:
+    frame_dig 4
+    int 10
+    shl
+    frame_dig 5
+    |
+    int 1
+    |
+    frame_bury 0
+    retsub
+
+
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.reveal() -> bytes:
 reveal:
     proto 0 1
+    int 0
+    dupn 5
     byte ""
-    dup
+    dupn 12
     txn Sender
     int 0
     byte "active_commitment"
@@ -170,16 +347,13 @@ reveal:
     byte "active_commitment"
     app_local_del
     dup
-    extract 40 1 // on error: Index access is out of bounds
+    extract 40 2 // on error: Index access is out of bounds
     btoi
+    swap
     dup
-    uncover 2
-    dup
-    extract 41 1 // on error: Index access is out of bounds
+    extract 42 2 // on error: Index access is out of bounds
     btoi
-    dup
-    cover 3
-    cover 3
+    swap
     global Round
     dig 1
     extract 32 8 // on error: Index access is out of bounds
@@ -192,7 +366,7 @@ reveal:
     swap
     extract 0 32 // on error: Index access is out of bounds
     dup
-    cover 4
+    cover 2
     dup
     len
     itob
@@ -220,111 +394,278 @@ reveal:
     assert // ARC4 prefix is valid
     extract 2 0
     callsub pcg128_init
-    cover 5
-    cover 4
     cover 3
     cover 2
-    dup
-    int 255
-    >=
-    dig 1
-    int 255
-    uncover 2
-    select
-    byte 0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff
+    swap
+    int 35000
     int 0
-    uncover 2
-    substring3
-    cover 2
-    <
-    bz reveal_ternary_false@3
-    frame_dig 3
-    frame_bury 1
-    b reveal_ternary_merge@4
+    callsub ensure_budget
+    int 0
 
-reveal_ternary_false@3:
-    frame_dig 2
+reveal_for_header@2:
+    frame_dig 26
+    int 200
+    <
+    bz reveal_after_for@5
+    frame_dig 26
+    dup
+    byte 0x
+    stores
+    int 1
+    +
+    frame_bury 26
+    b reveal_for_header@2
+
+reveal_after_for@5:
+    frame_dig 20
+    frame_dig 19
+    <
+    bz reveal_ternary_false@7
+    frame_dig 20
+    frame_bury 13
+    b reveal_ternary_merge@8
+
+reveal_ternary_false@7:
+    frame_dig 19
     int 1
     -
-    frame_bury 1
+    frame_bury 13
 
-reveal_ternary_merge@4:
+reveal_ternary_merge@8:
     int 700
-    frame_dig 1
+    frame_dig 13
     *
     int 0
     callsub ensure_budget
     int 0
-    frame_bury 0
+    frame_bury 26
 
-reveal_for_header@5:
-    frame_dig 0
-    frame_dig 1
+reveal_for_header@9:
+    frame_dig 26
+    frame_dig 13
     <
-    bz reveal_after_for@8
-    frame_dig 0
+    bz reveal_after_for@30
+    frame_dig 26
     dup
     itob
-    frame_dig 2
+    dup
+    frame_bury 2
+    frame_dig 19
     itob
-    frame_dig 8
-    frame_dig 7
-    frame_dig 6
-    frame_dig 5
+    frame_dig 25
+    frame_dig 24
+    frame_dig 23
+    frame_dig 22
     uncover 5
     uncover 5
     int 1
     callsub pcg128_random
     cover 4
-    frame_bury 5
-    frame_bury 6
-    frame_bury 7
-    frame_bury 8
+    frame_bury 22
+    frame_bury 23
+    frame_bury 24
+    frame_bury 25
     extract 2 0
     extract 0 16 // on error: Index access is out of bounds
-    int 15
-    getbyte
-    frame_dig 9
+    int 12
+    extract_uint32
     dup
-    dig 3
-    getbyte
-    cover 3
-    dup
-    dig 2
-    getbyte
-    dig 3
-    swap
-    setbyte
-    swap
-    uncover 3
-    setbyte
     frame_bury 9
-    int 1
-    +
-    frame_bury 0
-    b reveal_for_header@5
-
-reveal_after_for@8:
-    frame_dig 3
+    dig 1
+    int 200
+    %
     dup
-    itob
-    extract 6 2
-    swap
-    frame_dig 9
+    frame_bury 14
+    loads
+    dup
+    frame_bury 0
+    uncover 2
+    callsub linear_search
+    frame_bury 8
+    frame_bury 7
     dup
     cover 2
-    len
-    dup2
-    >=
-    select
-    int 0
+    frame_bury 6
+    dup
+    int 200
+    %
+    dup
+    frame_bury 15
+    loads
+    dup
+    frame_bury 1
     swap
-    substring3
+    callsub linear_search
+    frame_bury 12
+    frame_bury 11
+    frame_bury 10
+    bz reveal_else_body@15
+    frame_dig 7
+    int 2
+    +
+    frame_bury 16
+    frame_dig 10
+    bz reveal_ternary_false@13
+    frame_dig 12
+    b reveal_ternary_merge@14
+
+reveal_ternary_false@13:
+    frame_dig 9
+    int 1
+    +
+
+reveal_ternary_merge@14:
+    itob
+    extract 6 2
+    frame_dig 0
+    frame_dig 16
+    uncover 2
+    replace3
+    frame_bury 0
+    b reveal_after_if_else@19
+
+reveal_else_body@15:
+    frame_dig 2
+    extract 6 2
+    frame_bury 3
+    frame_dig 10
+    bz reveal_ternary_false@17
+    frame_dig 12
+    b reveal_ternary_merge@18
+
+reveal_ternary_false@17:
+    frame_dig 9
+    int 1
+    +
+
+reveal_ternary_merge@18:
+    itob
+    extract 6 2
+    frame_dig 3
+    swap
     concat
+    frame_dig 0
+    swap
+    concat
+    frame_bury 0
+
+reveal_after_if_else@19:
+    frame_dig 10
+    bz reveal_else_body@24
+    frame_dig 11
+    int 2
+    +
+    frame_bury 17
+    frame_dig 6
+    bz reveal_ternary_false@22
+    frame_dig 8
+    b reveal_ternary_merge@23
+
+reveal_ternary_false@22:
+    frame_dig 26
+    int 1
+    +
+
+reveal_ternary_merge@23:
+    itob
+    extract 6 2
+    frame_dig 1
+    frame_dig 17
+    uncover 2
+    replace3
+    frame_bury 1
+    b reveal_after_if_else@28
+
+reveal_else_body@24:
+    frame_dig 9
+    itob
+    extract 6 2
+    frame_bury 4
+    frame_dig 6
+    bz reveal_ternary_false@26
+    frame_dig 8
+    b reveal_ternary_merge@27
+
+reveal_ternary_false@26:
+    frame_dig 26
+    int 1
+    +
+
+reveal_ternary_merge@27:
+    itob
+    extract 6 2
     frame_dig 4
+    swap
+    concat
+    frame_dig 1
+    swap
+    concat
+    frame_bury 1
+
+reveal_after_if_else@28:
+    frame_dig 14
+    frame_dig 0
+    stores
+    frame_dig 15
+    frame_dig 1
+    stores
+    frame_dig 26
+    int 1
+    +
+    frame_bury 26
+    b reveal_for_header@9
+
+reveal_after_for@30:
+    frame_dig 20
+    itob
+    extract 6 2
+    frame_bury 5
+    int 0
+    frame_bury 26
+
+reveal_for_header@31:
+    frame_dig 26
+    frame_dig 20
+    <
+    bz reveal_after_for@37
+    frame_dig 26
+    dup
+    int 200
+    %
+    loads
+    swap
+    callsub linear_search
+    frame_bury 18
+    pop
+    bz reveal_ternary_false@34
+    frame_dig 18
+    itob
+    extract 6 2
+    b reveal_ternary_merge@35
+
+reveal_ternary_false@34:
+    frame_dig 26
+    int 1
+    +
+    itob
+    extract 6 2
+
+reveal_ternary_merge@35:
+    frame_dig 5
+    swap
+    concat
+    frame_bury 5
+    frame_dig 26
+    int 1
+    +
+    frame_bury 26
+    b reveal_for_header@31
+
+reveal_after_for@37:
+    frame_dig 21
     byte 0x0022
     concat
-    swap
+    frame_dig 5
     concat
     frame_bury 0
     retsub
@@ -385,48 +726,6 @@ __pcg32_step:
     frame_dig -1
     addw
     bury 1
-    retsub
-
-
-// algopy.ensure_budget(required_budget: uint64, fee_source: uint64) -> void:
-ensure_budget:
-    proto 2 0
-    frame_dig -2
-    int 10
-    +
-
-ensure_budget_while_top@1:
-    frame_dig 0
-    global OpcodeBudget
-    >
-    bz ensure_budget_after_while@7
-    itxn_begin
-    int appl
-    itxn_field TypeEnum
-    int DeleteApplication
-    itxn_field OnCompletion
-    byte 0x068101
-    itxn_field ApprovalProgram
-    byte 0x068101
-    itxn_field ClearStateProgram
-    frame_dig -1
-    switch ensure_budget_switch_case_0@3 ensure_budget_switch_case_1@4
-    b ensure_budget_switch_case_next@6
-
-ensure_budget_switch_case_0@3:
-    int 0
-    itxn_field Fee
-    b ensure_budget_switch_case_next@6
-
-ensure_budget_switch_case_1@4:
-    global MinTxnFee
-    itxn_field Fee
-
-ensure_budget_switch_case_next@6:
-    itxn_submit
-    b ensure_budget_while_top@1
-
-ensure_budget_after_while@7:
     retsub
 
 
@@ -696,6 +995,52 @@ __uint128_twos:
     b+
     byte 0xffffffffffffffffffffffffffffffff
     b&
+    retsub
+
+
+// smart_contracts.verifiable_giveaway.contract.linear_search(bin_list: bytes, key: uint64) -> uint64, uint64, uint64:
+linear_search:
+    proto 2 3
+    frame_dig -2
+    len
+    int 0
+
+linear_search_for_header@1:
+    frame_dig 1
+    frame_dig 0
+    <
+    bz linear_search_after_for@6
+    frame_dig -2
+    frame_dig 1
+    extract_uint16
+    frame_dig -1
+    ==
+    bz linear_search_after_if_else@4
+    frame_dig 1
+    dup
+    int 2
+    +
+    frame_dig -2
+    swap
+    extract_uint16
+    int 1
+    cover 2
+    uncover 4
+    uncover 4
+    retsub
+
+linear_search_after_if_else@4:
+    frame_dig 1
+    int 4
+    +
+    frame_bury 1
+    b linear_search_for_header@1
+
+linear_search_after_for@6:
+    int 0
+    dupn 2
+    uncover 4
+    uncover 4
     retsub
 
 

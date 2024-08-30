@@ -114,20 +114,22 @@ def test_shuffle(
 ) -> None:
     participants, winners, shuffled_winners = test_scenario
 
+    sp = algorand_client.client.algod.suggested_params()
+    sp.min_fee *= 500
+
     commit_result = verifiable_giveaway_client.opt_in_commit(
         delay=1,
         participants=participants,
         winners=winners,
         transaction_parameters=TransactionParameters(
-            signer=user_account.signer, sender=user_account.address
+            signer=user_account.signer, sender=user_account.address, suggested_params=sp
         ),
     )
 
     assert commit_result.confirmed_round
 
     sp = algorand_client.client.algod.suggested_params()
-    sp.flat_fee = True
-    sp.fee = 2_000 + winners * 1_000 + 1_000
+    sp.min_fee *= 500
 
     reveal_result = verifiable_giveaway_client.close_out_reveal(
         transaction_parameters=TransactionParameters(
