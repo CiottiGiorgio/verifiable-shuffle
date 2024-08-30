@@ -159,7 +159,10 @@ class VerifiableGiveaway(ARC4Contract):
         assert 2 <= participants.native
         assert winners.native <= participants.native
 
-        ensure_budget(700 * 2 * winners.native, OpUpFeeSource.GroupCredit)
+        ensure_budget(
+            700 * TemplateVar[UInt64]("OPUP_CALLS_SAFETY_CHECK"),
+            OpUpFeeSource.GroupCredit,
+        )
         sum_of_logs = UInt64(0)
         for i in urange(
             participants.native - winners.native + 1, participants.native + 1
@@ -197,7 +200,9 @@ class VerifiableGiveaway(ARC4Contract):
 
         state = pcg128_init(vrf_output.native)
 
-        ensure_budget(700 * 50, OpUpFeeSource.GroupCredit)
+        ensure_budget(
+            700 * TemplateVar[UInt64]("OPUP_CALLS_DICT_INIT"), OpUpFeeSource.GroupCredit
+        )
         for i in urange(200):
             op.Scratch.store(i, Bytes())
 
@@ -219,7 +224,10 @@ class VerifiableGiveaway(ARC4Contract):
         )
         # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
         #  and the contract should protect the user/funding account.
-        ensure_budget(700 * n_shuffles, OpUpFeeSource.GroupCredit)
+        ensure_budget(
+            700 * TemplateVar[UInt64]("OPUP_CALLS_KNUTH_SHUFFLE"),
+            OpUpFeeSource.GroupCredit,
+        )
         for i in urange(n_shuffles):
             state, sequence = pcg128_random(
                 state,

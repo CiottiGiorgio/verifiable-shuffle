@@ -61,6 +61,9 @@ def verifiable_giveaway_client(
             "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
             "SAFETY_ROUND_GAP": 1,
             "LOGARITHM_FRACTIONAL_PRECISION": 10,
+            "OPUP_CALLS_SAFETY_CHECK": 10,
+            "OPUP_CALLS_DICT_INIT": 5,
+            "OPUP_CALLS_KNUTH_SHUFFLE": 20,
         },
     )
 
@@ -116,7 +119,8 @@ def test_shuffle(
     participants, winners, shuffled_winners = test_scenario
 
     sp = algorand_client.client.algod.suggested_params()
-    sp.min_fee *= 500
+    sp.flat_fee = True
+    sp.fee = 11_000
 
     commit_result = verifiable_giveaway_client.opt_in_commit(
         delay=1,
@@ -130,7 +134,8 @@ def test_shuffle(
     assert commit_result.confirmed_round
 
     sp = algorand_client.client.algod.suggested_params()
-    sp.min_fee *= 500
+    sp.flat_fee = True
+    sp.fee = 26_000
 
     reveal_result = verifiable_giveaway_client.close_out_reveal(
         transaction_parameters=TransactionParameters(

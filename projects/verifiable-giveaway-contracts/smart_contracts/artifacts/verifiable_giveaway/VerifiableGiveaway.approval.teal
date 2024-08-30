@@ -142,8 +142,8 @@ commit:
     dup2
     <=
     assert
-    int 1400
-    dig 2
+    int 700
+    int TMPL_OPUP_CALLS_SAFETY_CHECK
     *
     int 0
     callsub ensure_budget
@@ -391,7 +391,9 @@ reveal:
     cover 3
     cover 2
     swap
-    int 35000
+    int 700
+    int TMPL_OPUP_CALLS_DICT_INIT
+    *
     int 0
     callsub ensure_budget
     int 0
@@ -427,7 +429,7 @@ reveal_ternary_false@7:
 
 reveal_ternary_merge@8:
     int 700
-    frame_dig 13
+    int TMPL_OPUP_CALLS_KNUTH_SHUFFLE
     *
     int 0
     callsub ensure_budget
