@@ -4,14 +4,14 @@ version = "0.2.0"
 description = "Algorand smart contracts"
 authors = ["Giorgio Ciotti <gciotti.dev@gmail.com>"]
 readme = "README.md"
-packages = [{include = "smart_contracts"}]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
 algokit-utils = "^2.3.0"
 python-dotenv = "^1.0.0"
 algorand-python = "^2.0.0"
-algorand-python-testing = "^0.3.0"
+algorand-python-testing = "^0.4.0"
 lib-pcg-algopy = "^0.3.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -22,6 +22,7 @@ mypy = "*"
 pytest = "*"
 pytest-cov = "*"
 pip-audit = "*"
+pre-commit = "*"
 puyapy = "*"
 
 [build-system]

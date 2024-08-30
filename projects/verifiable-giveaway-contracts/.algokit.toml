@@ -18,7 +18,7 @@ artifacts = 'smart_contracts/artifacts'
 command = "poetry run python -m smart_contracts deploy"
 environment_secrets = [
   "DEPLOYER_MNEMONIC",
-#  "DISPENSER_MNEMONIC",
+  "DISPENSER_MNEMONIC",
 ]
 
 [project.deploy.localnet]
@@ -37,8 +37,9 @@ audit = { commands = [
   'poetry run pip-audit -r requirements.txt',
 ], description = 'Audit with pip-audit' }
 lint = { commands = [
-  'poetry run black .',
-  'poetry run ruff check . --fix',
+  'poetry run black --check --diff .',
+  'poetry run ruff check .',
+  'poetry run mypy',
 ], description = 'Perform linting' }
 audit-teal = { commands = [
   # 🚨 IMPORTANT 🚨: For strict TEAL validation, remove --exclude statements. The default starter contract is not for production. Ensure thorough testing and adherence to best practices in smart contract development. This is not a replacement for a professional audit.
@@ -50,8 +51,3 @@ ci-teal-diff = { commands = [
   'git add -N ./smart_contracts/artifacts',
   'git diff --exit-code --minimal ./smart_contracts/artifacts',
 ], description = 'Check TEAL files for differences' }
-ci-lint = { commands = [
-  'poetry run black --check --diff .',
-  'poetry run ruff check .',
-  'poetry run mypy',
-], description = 'Perform linting' }

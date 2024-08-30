@@ -371,6 +371,7 @@ reveal:
     itxn_field ApplicationID
     method "must_get(uint64,byte[])byte[]"
     itxn_field ApplicationArgs
+    swap
     itxn_field ApplicationArgs
     itxn_field ApplicationArgs
     int appl

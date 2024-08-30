@@ -35,8 +35,10 @@ Run the following commands within the project folder:
 #### Terminal
 Directly manage and interact with your project using AlgoKit commands:
 
-1. **Build Contracts**: `algokit project run build` compiles all smart contracts.
-2. **Deploy**: Use `algokit project deploy localnet` to deploy contracts to the local network.
+1. **Build Contracts**: `algokit project run build` compiles all smart contracts. You can also specify a specific contract by passing the name of the contract folder as an extra argument.
+For example: `algokit project run build -- hello_world` will only build the `hello_world` contract.
+2. **Deploy**: Use `algokit project deploy localnet` to deploy contracts to the local network. You can also specify a specific contract by passing the name of the contract folder as an extra argument.
+For example: `algokit project deploy localnet -- hello_world` will only deploy the `hello_world` contract.
 
 #### VS Code 
 For a seamless experience with breakpoint debugging and other features:
@@ -77,7 +79,7 @@ By default the template instance does not contain any env files. Using [`algokit
 
 To generate a new `.env` or `.env.{target_network}` file, run `algokit generate env-file`### Continuous Integration / Continuous Deployment (CI/CD)
 
-This project uses [GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions) to define CI/CD workflows, which are located in the [.github/workflows](`../../.github/workflows`) folder.
+This project uses [GitHub Actions](https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions) to define CI/CD workflows, which are located in the [.github/workflows](`.github/workflows`) folder.
 
 > Please note, if you instantiated the project with --workspace flag in `algokit init` it will automatically attempt to move the contents of the `.github` folder to the root of the workspace.
 
@@ -148,5 +150,6 @@ This project makes use of Algorand Python to build Algorand smart contracts. The
 - [mypy](https://mypy-lang.org/): Static type checker.
 - [pytest](https://docs.pytest.org/): Automated testing.
 - [pip-audit](https://pypi.org/project/pip-audit/): Tool for scanning Python environments for packages with known vulnerabilities.
+- [pre-commit](https://pre-commit.com/): A framework for managing and maintaining multi-language pre-commit hooks, to enable pre-commit you need to run `pre-commit install` in the root of the repository. This will install the pre-commit hooks and run them against modified files when committing. If any of the hooks fail, the commit will be aborted. To run the hooks on all files, use `pre-commit run --all-files`.
 It has also been configured to have a productive dev experience out of the box in [VS Code](https://code.visualstudio.com/), see the [.vscode](./.vscode) folder.
 
