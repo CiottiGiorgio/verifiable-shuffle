@@ -207,20 +207,19 @@ class VerifiableGiveaway(ARC4Contract):
             op.Scratch.store(i, Bytes())
 
         # Knuth shuffle.
-        # We don't create a pre-initialized array of elements from 1 to participants because
+        # We don't create a pre-initialized array of elements from 1 to n because
         #  that could easily exceed the stack element size limit.
-        # Instead, we assume that at position N lies the number N + 1.
+        # Instead, we assume that at position i lies the number i + 1.
         # Where that element has been changed, we will look it up in a dict-like data structure based on scratch space.
-        # Scratch slot N will contain all key-value pairs where key % 200 == N.
 
         # We want to stop after "winners" iterations unless "winners" == "participants"
-        #  in which case we want to stop at "participants" - 1.
+        #  in which case we want to stop at "winners" - 1.
         # We never need to shuffle the last element because it would just end up in the same position.
         n_shuffles = (
             committed_winners
             # We know that, by construction, "winners" <= "participants".
             if committed_winners < committed_participants
-            else committed_participants - 1
+            else committed_winners - 1
         )
         # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
         #  and the contract should protect the user/funding account.
@@ -228,6 +227,7 @@ class VerifiableGiveaway(ARC4Contract):
             700 * TemplateVar[UInt64]("OPUP_CALLS_KNUTH_SHUFFLE"),
             OpUpFeeSource.GroupCredit,
         )
+        winners = arc4.UInt16(committed_winners).bytes
         for i in urange(n_shuffles):
             state, sequence = pcg128_random(
                 state,
@@ -243,15 +243,7 @@ class VerifiableGiveaway(ARC4Contract):
             j_bin = op.Scratch.load_bytes(j % UInt64(200))
             j_found, j_pos, j_value = linear_search(j_bin, j)
 
-            if i_found:
-                i_bin = op.replace(
-                    i_bin, i_pos + 4, arc4.UInt32(j_value if j_found else j + 1).bytes
-                )
-            else:
-                i_bin += (
-                    arc4.UInt32(i).bytes
-                    + arc4.UInt32(j_value if j_found else j + 1).bytes
-                )
+            winners += arc4.UInt32(j_value if j_found else j + 1).bytes
 
             if j_found:
                 j_bin = op.replace(
@@ -262,15 +254,14 @@ class VerifiableGiveaway(ARC4Contract):
                     arc4.UInt32(j).bytes
                     + arc4.UInt32(i_value if i_found else i + 1).bytes
                 )
-            op.Scratch.store(i % UInt64(200), i_bin)
             op.Scratch.store(j % UInt64(200), j_bin)
 
-        winners = arc4.UInt16(committed_winners).bytes
-        for i in urange(committed_winners):
-            found, _pos, value = linear_search(
-                op.Scratch.load_bytes(i % UInt64(200)), i
+        if committed_participants == committed_winners:
+            found, _pos, last_winner = linear_search(
+                op.Scratch.load_bytes((committed_winners - UInt64(1)) % UInt64(200)),
+                committed_winners - UInt64(1),
             )
-            winners += arc4.UInt32(value).bytes if found else arc4.UInt32(i + 1).bytes
+            winners += arc4.UInt32(last_winner if found else committed_winners).bytes
 
         return Reveal(
             commitment_tx_id=commitment.tx_id.copy(),

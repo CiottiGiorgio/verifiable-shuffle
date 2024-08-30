@@ -329,9 +329,9 @@ binary_logarithm_after_for@9:
 reveal:
     proto 0 1
     int 0
-    dupn 5
+    dupn 3
     byte ""
-    dupn 12
+    dupn 8
     txn Sender
     int 0
     byte "commitment"
@@ -399,33 +399,33 @@ reveal:
     int 0
 
 reveal_for_header@2:
-    frame_dig 26
+    frame_dig 20
     int 200
     <
     bz reveal_after_for@5
-    frame_dig 26
+    frame_dig 20
     dup
     byte 0x
     stores
     int 1
     +
-    frame_bury 26
+    frame_bury 20
     b reveal_for_header@2
 
 reveal_after_for@5:
-    frame_dig 20
-    frame_dig 19
+    frame_dig 14
+    frame_dig 13
     <
     bz reveal_ternary_false@7
-    frame_dig 20
-    frame_bury 13
+    frame_dig 14
+    frame_bury 10
     b reveal_ternary_merge@8
 
 reveal_ternary_false@7:
-    frame_dig 19
+    frame_dig 14
     int 1
     -
-    frame_bury 13
+    frame_bury 10
 
 reveal_ternary_merge@8:
     int 700
@@ -433,111 +433,126 @@ reveal_ternary_merge@8:
     *
     int 0
     callsub ensure_budget
+    frame_dig 14
+    itob
+    extract 6 2
+    frame_bury 2
     int 0
-    frame_bury 26
+    frame_bury 20
 
 reveal_for_header@9:
-    frame_dig 26
-    frame_dig 13
+    frame_dig 20
+    frame_dig 10
     <
-    bz reveal_after_for@30
-    frame_dig 26
+    bz reveal_after_for@24
+    frame_dig 20
     dup
     itob
-    dup
-    frame_bury 2
+    frame_dig 13
+    itob
     frame_dig 19
-    itob
-    frame_dig 25
-    frame_dig 24
-    frame_dig 23
-    frame_dig 22
+    frame_dig 18
+    frame_dig 17
+    frame_dig 16
     uncover 5
     uncover 5
     int 1
     callsub pcg128_random
     cover 4
-    frame_bury 22
-    frame_bury 23
-    frame_bury 24
-    frame_bury 25
+    frame_bury 16
+    frame_bury 17
+    frame_bury 18
+    frame_bury 19
     extract 2 0
     extract 0 16 // on error: Index access is out of bounds
     int 12
     extract_uint32
     dup
-    frame_bury 9
+    frame_bury 6
     dig 1
     int 200
     %
-    dup
-    frame_bury 14
     loads
-    dup
-    frame_bury 0
     uncover 2
     callsub linear_search
-    frame_bury 8
-    frame_bury 7
-    dup
-    cover 2
-    frame_bury 6
+    frame_bury 5
+    pop
+    frame_bury 4
     dup
     int 200
     %
     dup
-    frame_bury 15
+    frame_bury 11
     loads
     dup
-    frame_bury 1
+    frame_bury 0
     swap
     callsub linear_search
-    frame_bury 12
-    frame_bury 11
-    frame_bury 10
-    bz reveal_else_body@15
-    frame_dig 7
-    int 4
-    +
-    frame_bury 16
-    frame_dig 10
-    bz reveal_ternary_false@13
-    frame_dig 12
-    b reveal_ternary_merge@14
-
-reveal_ternary_false@13:
+    frame_bury 9
+    frame_bury 8
+    dup
+    frame_bury 7
+    bz reveal_ternary_false@12
     frame_dig 9
+    b reveal_ternary_merge@13
+
+reveal_ternary_false@12:
+    frame_dig 6
     int 1
     +
 
-reveal_ternary_merge@14:
+reveal_ternary_merge@13:
     itob
     extract 4 4
-    frame_dig 0
-    frame_dig 16
-    uncover 2
-    replace3
-    frame_bury 0
-    b reveal_after_if_else@19
-
-reveal_else_body@15:
     frame_dig 2
-    extract 4 4
-    frame_bury 3
-    frame_dig 10
-    bz reveal_ternary_false@17
-    frame_dig 12
-    b reveal_ternary_merge@18
+    swap
+    concat
+    frame_bury 2
+    frame_dig 7
+    bz reveal_else_body@18
+    frame_dig 8
+    int 4
+    +
+    frame_bury 12
+    frame_dig 4
+    bz reveal_ternary_false@16
+    frame_dig 5
+    b reveal_ternary_merge@17
 
-reveal_ternary_false@17:
-    frame_dig 9
+reveal_ternary_false@16:
+    frame_dig 20
     int 1
     +
 
-reveal_ternary_merge@18:
+reveal_ternary_merge@17:
     itob
     extract 4 4
-    frame_dig 3
+    frame_dig 0
+    frame_dig 12
+    uncover 2
+    replace3
+    frame_bury 0
+    b reveal_after_if_else@22
+
+reveal_else_body@18:
+    frame_dig 6
+    itob
+    extract 4 4
+    frame_bury 1
+    frame_dig 4
+    bz reveal_ternary_false@20
+    frame_dig 5
+    b reveal_ternary_merge@21
+
+reveal_ternary_false@20:
+    frame_dig 20
+    int 1
+    +
+
+reveal_ternary_merge@21:
+    itob
+    extract 4 4
+    frame_dig 1
     swap
     concat
     frame_dig 0
@@ -545,123 +560,49 @@ reveal_ternary_merge@18:
     concat
     frame_bury 0
 
-reveal_after_if_else@19:
-    frame_dig 10
-    bz reveal_else_body@24
+reveal_after_if_else@22:
     frame_dig 11
-    int 4
-    +
-    frame_bury 17
-    frame_dig 6
-    bz reveal_ternary_false@22
-    frame_dig 8
-    b reveal_ternary_merge@23
-
-reveal_ternary_false@22:
-    frame_dig 26
-    int 1
-    +
-
-reveal_ternary_merge@23:
-    itob
-    extract 4 4
-    frame_dig 1
-    frame_dig 17
-    uncover 2
-    replace3
-    frame_bury 1
-    b reveal_after_if_else@28
-
-reveal_else_body@24:
-    frame_dig 9
-    itob
-    extract 4 4
-    frame_bury 4
-    frame_dig 6
-    bz reveal_ternary_false@26
-    frame_dig 8
-    b reveal_ternary_merge@27
-
-reveal_ternary_false@26:
-    frame_dig 26
-    int 1
-    +
-
-reveal_ternary_merge@27:
-    itob
-    extract 4 4
-    frame_dig 4
-    swap
-    concat
-    frame_dig 1
-    swap
-    concat
-    frame_bury 1
-
-reveal_after_if_else@28:
-    frame_dig 14
     frame_dig 0
     stores
-    frame_dig 15
-    frame_dig 1
-    stores
-    frame_dig 26
+    frame_dig 20
     int 1
     +
-    frame_bury 26
+    frame_bury 20
     b reveal_for_header@9
 
-reveal_after_for@30:
-    frame_dig 20
-    itob
-    extract 6 2
-    frame_bury 5
-    int 0
-    frame_bury 26
-
-reveal_for_header@31:
-    frame_dig 26
-    frame_dig 20
-    <
-    bz reveal_after_for@37
-    frame_dig 26
+reveal_after_for@24:
+    frame_dig 13
+    frame_dig 14
+    ==
+    frame_dig 2
+    frame_bury 3
+    bz reveal_after_if_else@26
+    frame_dig 14
+    dup
+    int 1
+    -
     dup
     int 200
     %
     loads
     swap
     callsub linear_search
-    frame_bury 18
+    cover 2
     pop
-    bz reveal_ternary_false@34
-    frame_dig 18
+    select
     itob
     extract 4 4
-    b reveal_ternary_merge@35
-
-reveal_ternary_false@34:
-    frame_dig 26
-    int 1
-    +
-    itob
-    extract 4 4
-
-reveal_ternary_merge@35:
-    frame_dig 5
+    frame_dig 2
     swap
     concat
-    frame_bury 5
-    frame_dig 26
-    int 1
-    +
-    frame_bury 26
-    b reveal_for_header@31
+    frame_bury 3
 
-reveal_after_for@37:
-    frame_dig 21
+reveal_after_if_else@26:
+    frame_dig 3
+    frame_dig 15
     byte 0x0022
     concat
-    frame_dig 5
+    swap
     concat
     frame_bury 0
     retsub

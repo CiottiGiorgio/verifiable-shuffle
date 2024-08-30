@@ -63,7 +63,7 @@ def verifiable_giveaway_client(
             "LOGARITHM_FRACTIONAL_PRECISION": 10,
             "OPUP_CALLS_SAFETY_CHECK": 10,
             "OPUP_CALLS_DICT_INIT": 5,
-            "OPUP_CALLS_KNUTH_SHUFFLE": 20,
+            "OPUP_CALLS_KNUTH_SHUFFLE": 15,
         },
     )
 
@@ -135,7 +135,7 @@ def test_shuffle(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 26_000
+    sp.fee = 21_000
 
     reveal_result = verifiable_giveaway_client.close_out_reveal(
         transaction_parameters=TransactionParameters(
