@@ -14,30 +14,69 @@ from algopy import (
     arc4,
     ensure_budget,
     op,
-    urange,
     subroutine,
+    urange,
 )
 from lib_pcg import pcg128_init, pcg128_random
 
-# We desire to produce ordered k-permutations of the participants where k == winners.
-# The number of k-permutations is n!/(n-k)!.
-# In the worst case n == k and this collapses back to n!
-# This is why we want to constrain the number of winners to be much less than the participants.
-# The number of combinations in the worst case is significantly lower but the user
-#  can always, incorrectly, assume that the results are ordered.
-# This is why we derive these safety entropy parameters based on k-permutations.
+# We desire to produce ordered k-permutations of the participants where n == participants, k == winners.
+# The algorithm that we use to generate k-permutations wouldn't change if we wished to generate combinations.
+# Therefore, the user could (wrongly) assume that it's equally safe to generate k-permutations or combination.
+# This is not the case.
+# The number of ordered k-permutations is n! / (n-k)!.
+# The number of unordered combinations is (n choose k) == n! / ((n-k)!k!).
+# In the worst case, the number of possible k-permutations is uncontrollably larger than the number of
+#  possible combinations.
+# The conceptual distinction between ordered k-permutations and unordered combinations is also difficult to grasp for
+#  a general audience.
 
-# We want to guarantee that the ratio between the number of possible outcomes to this
-#  winner selecting commitment is at least 2^128.
+# For these reasons, we will make our safety arguments and advertise the features of this smart contract
+#  in terms of k-permutations.
+# Since we are using pseudo-randomness, we need to guarantee that our randomness seed size is appropriate for
+#  the number of possible k-permutations.
+# The seed not only needs to be strictly larger, but also overwhelmingly larger to prevent collisions in
+#  the irregular mapping from seeds to k-permutations.
 # https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#Pseudorandom_generators
-# #possible_prn_sequences / #possible_k_permutations >= 2^128
-# log2(#possible_prn_sequences) - log2(#possible_k_permutations) >= 128
-# log2(#possible_k_permutations) <= log2(2^256) - 128
-# log2(#possible_k_permutations) <= 128
 
-# First, some more arithmetic:
+# Let's define some bounds on our inputs:
+# The number of participants must be greater or equal to the number of winners (n >= k).
+# A single seed produced with the Randomness Beacon is 256-bit.
+# We want the ratio between the number of distinct pseudo-random sequences and
+#  the number of k-permutations to be at least 2^128 (overwhelmingly larger).
+
+# #distinct_prn_sequences / #k_permutations >= 2^128
+# log2(#distinct_prn_sequences) - log2(#k_permutations) >= 128
+# log2(#k_permutations) <= log2(2^256) - 128
+# log2(#k_permutations) <= 128
+
 # log2(n! / (n-k)!) = log2(n * (n-1) * ... * (n-k+1)) = log2(n) + log2(n-1) + ... + log2(n-k+1)
-# If this sum is less than 128, we can safely accept this commitment.
+# In natural language, the sum of the logarithms of the numbers from n to n-k+1.
+# This sum must be less than or equal to 128.
+
+# For any #participants == n, the number of possible k-permutations is minimized by k == 1.
+# Since:
+# - log2(n! / (n-1)!) = log2(n)
+# - log2(2^128 - 1) ~ 127,999
+# - log2(2^128) = 128
+# - log2(2^128 + 1) > 128
+# When n >= 2^128 + 1, there does not exist an admissible k such that #k-permutations is safe to compute
+#  with a 128-bit seed.
+# Therefore, n fits in a 256-bit integer.
+
+# However, this an enormous number of participants and would allow for a single winner at most.
+# It would also force us to use BigUInt math everywhere and that's expensive.
+# If participants was a 64-bit number, it would allow for 2 winners at most, but we could use native uint64 math.
+# We are going to assume that participants is a 32-bit number because it allows 4 winners in the worst case
+#  and native uint64 math.
+
+# For any #winners == k, the number of possible k-permutations is minimized by n == k.
+# Since:
+# - log2(k! / (k-k)!) = log2(k!)
+# - log2(34!) ~ 127,795
+# - log2(35!) ~ 132,924
+# When k >= 35, there does not exist an admissible n such that #k-permutations is safe to compute
+#  with a 128-bit seed.
+# Therefore, k fits in an 8-bit integer.
 
 
 # The amount of fractional bits calculated for the logarithm.
@@ -47,13 +86,13 @@ LOGARITHM_FRACTIONAL_PRECISION = 10
 class Commitment(arc4.Struct, kw_only=True):
     commitment_tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
     committed_block: arc4.UInt64
-    committed_participants: arc4.UInt16
-    committed_winners: arc4.UInt16
+    committed_participants: arc4.UInt32
+    committed_winners: arc4.UInt8
 
 
 class RevealOutcome(arc4.Struct, kw_only=True):
     commitment_tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
-    winners: arc4.DynamicArray[arc4.UInt16]
+    winners: arc4.DynamicArray[arc4.UInt32]
 
 
 # https://mathsanew.com/articles/computing_logarithm_bit_by_bit.pdf
@@ -121,7 +160,7 @@ class VerifiableGiveaway(ARC4Contract):
 
     @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
     def commit(
-        self, delay: arc4.UInt8, participants: arc4.UInt16, winners: arc4.UInt16
+        self, delay: arc4.UInt8, participants: arc4.UInt32, winners: arc4.UInt8
     ) -> None:
         assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
 
@@ -129,9 +168,11 @@ class VerifiableGiveaway(ARC4Contract):
         assert 2 <= participants.native
         assert winners.native <= participants.native
 
-        ensure_budget(700 * 2 *winners.native, OpUpFeeSource.GroupCredit)
+        ensure_budget(700 * 2 * winners.native, OpUpFeeSource.GroupCredit)
         sum_of_logs = UInt64(0)
-        for i in urange(participants.native - winners.native + 1, participants.native + 1):
+        for i in urange(
+            participants.native - winners.native + 1, participants.native + 1
+        ):
             sum_of_logs += binary_logarithm(i)
         assert sum_of_logs <= (128 << LOGARITHM_FRACTIONAL_PRECISION)
 
@@ -202,32 +243,44 @@ class VerifiableGiveaway(ARC4Contract):
             j_found, j_pos, j_value = linear_search(j_bin, j)
 
             if i_found:
-                i_bin = op.replace(i_bin, i_pos+2, arc4.UInt16(j_value if j_found else j + 1).bytes)
+                i_bin = op.replace(
+                    i_bin, i_pos + 4, arc4.UInt32(j_value if j_found else j + 1).bytes
+                )
             else:
-                i_bin += arc4.UInt16(i).bytes + arc4.UInt16(j_value if j_found else j + 1).bytes
+                i_bin += (
+                    arc4.UInt32(i).bytes
+                    + arc4.UInt32(j_value if j_found else j + 1).bytes
+                )
 
             if j_found:
-                j_bin = op.replace(j_bin, j_pos+2, arc4.UInt16(i_value if i_found else i + 1).bytes)
+                j_bin = op.replace(
+                    j_bin, j_pos + 4, arc4.UInt32(i_value if i_found else i + 1).bytes
+                )
             else:
-                j_bin += arc4.UInt16(j).bytes + arc4.UInt16(i_value if i_found else i + 1).bytes
+                j_bin += (
+                    arc4.UInt32(j).bytes
+                    + arc4.UInt32(i_value if i_found else i + 1).bytes
+                )
             op.Scratch.store(i % UInt64(200), i_bin)
             op.Scratch.store(j % UInt64(200), j_bin)
 
         winners = arc4.UInt16(committed_winners).bytes
         for i in urange(committed_winners):
-            found, _pos, value = linear_search(op.Scratch.load_bytes(i % UInt64(200)), i)
-            winners += arc4.UInt16(value).bytes if found else arc4.UInt16(i + 1).bytes
+            found, _pos, value = linear_search(
+                op.Scratch.load_bytes(i % UInt64(200)), i
+            )
+            winners += arc4.UInt32(value).bytes if found else arc4.UInt32(i + 1).bytes
 
         return RevealOutcome(
             commitment_tx_id=active_commitment.commitment_tx_id.copy(),
-            winners=arc4.DynamicArray[arc4.UInt16].from_bytes(winners),
+            winners=arc4.DynamicArray[arc4.UInt32].from_bytes(winners),
         )
 
 
 @subroutine
 def linear_search(bin_list: Bytes, key: UInt64) -> Tuple[bool, UInt64, UInt64]:
-    for i in urange(UInt64(0), bin_list.length, UInt64(4)):
-        bin_key = op.extract_uint16(bin_list, i)
+    for i in urange(UInt64(0), bin_list.length, UInt64(8)):
+        bin_key = op.extract_uint32(bin_list, i)
         if bin_key == key:
-            return True, i, op.extract_uint16(bin_list, i + 2)
+            return True, i, op.extract_uint32(bin_list, i + 4)
     return False, UInt64(0), UInt64(0)

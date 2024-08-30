@@ -5,8 +5,8 @@ smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.approval_program
     bz main_bare_routing@8
     method "get_templated_randomness_beacon_id()uint64"
     method "get_templated_safety_round_gap()uint64"
-    method "commit(uint8,uint16,uint16)void"
-    method "reveal()(byte[32],uint16[])"
+    method "commit(uint8,uint32,uint8)void"
+    method "reveal()(byte[32],uint32[])"
     txna ApplicationArgs 0
     match main_get_templated_randomness_beacon_id_route@2 main_get_templated_safety_round_gap_route@3 main_commit_route@4 main_reveal_route@5
     err // reject transaction
@@ -347,11 +347,11 @@ reveal:
     byte "active_commitment"
     app_local_del
     dup
-    extract 40 2 // on error: Index access is out of bounds
+    extract 40 4 // on error: Index access is out of bounds
     btoi
     swap
     dup
-    extract 42 2 // on error: Index access is out of bounds
+    extract 44 1 // on error: Index access is out of bounds
     btoi
     swap
     global Round
@@ -501,7 +501,7 @@ reveal_for_header@9:
     frame_bury 10
     bz reveal_else_body@15
     frame_dig 7
-    int 2
+    int 4
     +
     frame_bury 16
     frame_dig 10
@@ -516,7 +516,7 @@ reveal_ternary_false@13:
 
 reveal_ternary_merge@14:
     itob
-    extract 6 2
+    extract 4 4
     frame_dig 0
     frame_dig 16
     uncover 2
@@ -526,7 +526,7 @@ reveal_ternary_merge@14:
 
 reveal_else_body@15:
     frame_dig 2
-    extract 6 2
+    extract 4 4
     frame_bury 3
     frame_dig 10
     bz reveal_ternary_false@17
@@ -540,7 +540,7 @@ reveal_ternary_false@17:
 
 reveal_ternary_merge@18:
     itob
-    extract 6 2
+    extract 4 4
     frame_dig 3
     swap
     concat
@@ -553,7 +553,7 @@ reveal_after_if_else@19:
     frame_dig 10
     bz reveal_else_body@24
     frame_dig 11
-    int 2
+    int 4
     +
     frame_bury 17
     frame_dig 6
@@ -568,7 +568,7 @@ reveal_ternary_false@22:
 
 reveal_ternary_merge@23:
     itob
-    extract 6 2
+    extract 4 4
     frame_dig 1
     frame_dig 17
     uncover 2
@@ -579,7 +579,7 @@ reveal_ternary_merge@23:
 reveal_else_body@24:
     frame_dig 9
     itob
-    extract 6 2
+    extract 4 4
     frame_bury 4
     frame_dig 6
     bz reveal_ternary_false@26
@@ -593,7 +593,7 @@ reveal_ternary_false@26:
 
 reveal_ternary_merge@27:
     itob
-    extract 6 2
+    extract 4 4
     frame_dig 4
     swap
     concat
@@ -640,7 +640,7 @@ reveal_for_header@31:
     bz reveal_ternary_false@34
     frame_dig 18
     itob
-    extract 6 2
+    extract 4 4
     b reveal_ternary_merge@35
 
 reveal_ternary_false@34:
@@ -648,7 +648,7 @@ reveal_ternary_false@34:
     int 1
     +
     itob
-    extract 6 2
+    extract 4 4
 
 reveal_ternary_merge@35:
     frame_dig 5
@@ -1012,17 +1012,17 @@ linear_search_for_header@1:
     bz linear_search_after_for@6
     frame_dig -2
     frame_dig 1
-    extract_uint16
+    extract_uint32
     frame_dig -1
     ==
     bz linear_search_after_if_else@4
     frame_dig 1
     dup
-    int 2
+    int 4
     +
     frame_dig -2
     swap
-    extract_uint16
+    extract_uint32
     int 1
     cover 2
     uncover 4
@@ -1031,7 +1031,7 @@ linear_search_for_header@1:
 
 linear_search_after_if_else@4:
     frame_dig 1
-    int 4
+    int 8
     +
     frame_bury 1
     b linear_search_for_header@1
