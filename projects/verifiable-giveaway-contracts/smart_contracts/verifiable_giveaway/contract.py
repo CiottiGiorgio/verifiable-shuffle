@@ -84,13 +84,13 @@ LOGARITHM_FRACTIONAL_PRECISION = 10
 
 
 class Commitment(arc4.Struct, kw_only=True):
-    commitment_tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
-    committed_block: arc4.UInt64
-    committed_participants: arc4.UInt32
-    committed_winners: arc4.UInt8
+    tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
+    round: arc4.UInt64
+    participants: arc4.UInt32
+    winners: arc4.UInt8
 
 
-class RevealOutcome(arc4.Struct, kw_only=True):
+class Reveal(arc4.Struct, kw_only=True):
     commitment_tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
     winners: arc4.DynamicArray[arc4.UInt32]
 
@@ -137,7 +137,7 @@ def binary_logarithm(n: UInt64) -> UInt64:
 
 class VerifiableGiveaway(ARC4Contract):
     def __init__(self) -> None:
-        self.active_commitment = LocalState(Commitment)
+        self.commitment = LocalState(Commitment)
 
     @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
     def update(self) -> None:
@@ -176,29 +176,27 @@ class VerifiableGiveaway(ARC4Contract):
             sum_of_logs += binary_logarithm(i)
         assert sum_of_logs <= (128 << LOGARITHM_FRACTIONAL_PRECISION)
 
-        self.active_commitment[Txn.sender] = Commitment(
-            commitment_tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(
-                Txn.tx_id
-            ),
-            committed_block=arc4.UInt64(Global.round + delay.native),
-            committed_participants=participants,
-            committed_winners=winners,
+        self.commitment[Txn.sender] = Commitment(
+            tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(Txn.tx_id),
+            round=arc4.UInt64(Global.round + delay.native),
+            participants=participants,
+            winners=winners,
         )
 
     @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.CloseOut])
-    def reveal(self) -> RevealOutcome:
-        active_commitment = self.active_commitment[Txn.sender].copy()
-        del self.active_commitment[Txn.sender]
+    def reveal(self) -> Reveal:
+        commitment = self.commitment[Txn.sender].copy()
+        del self.commitment[Txn.sender]
 
-        committed_participants = active_commitment.committed_participants.native
-        committed_winners = active_commitment.committed_winners.native
+        committed_participants = commitment.participants.native
+        committed_winners = commitment.winners.native
 
-        assert Global.round >= active_commitment.committed_block.native
+        assert Global.round >= commitment.round.native
 
         vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
             "must_get",
-            active_commitment.committed_block,
-            active_commitment.commitment_tx_id.bytes,
+            commitment.round,
+            commitment.tx_id.bytes,
             app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
         )
 
@@ -210,7 +208,7 @@ class VerifiableGiveaway(ARC4Contract):
 
         # Knuth shuffle.
         # We don't create a pre-initialized array of elements from 1 to participants because
-        # that could easily exceed the stack element size limit.
+        #  that could easily exceed the stack element size limit.
         # Instead, we assume that at position N lies the number N + 1.
         # Where that element has been changed, we will look it up in a dict-like data structure based on scratch space.
         # Scratch slot N will contain all key-value pairs where key % 200 == N.
@@ -271,8 +269,8 @@ class VerifiableGiveaway(ARC4Contract):
             )
             winners += arc4.UInt32(value).bytes if found else arc4.UInt32(i + 1).bytes
 
-        return RevealOutcome(
-            commitment_tx_id=active_commitment.commitment_tx_id.copy(),
+        return Reveal(
+            commitment_tx_id=commitment.tx_id.copy(),
             winners=arc4.DynamicArray[arc4.UInt32].from_bytes(winners),
         )
 

@@ -190,7 +190,7 @@ commit_after_for@4:
     frame_dig -1
     concat
     txn Sender
-    byte "active_commitment"
+    byte "commitment"
     uncover 2
     app_local_put
     retsub
@@ -340,11 +340,11 @@ reveal:
     dupn 12
     txn Sender
     int 0
-    byte "active_commitment"
+    byte "commitment"
     app_local_get_ex
-    assert // check self.active_commitment exists for account
+    assert // check self.commitment exists for account
     txn Sender
-    byte "active_commitment"
+    byte "commitment"
     app_local_del
     dup
     extract 40 4 // on error: Index access is out of bounds
