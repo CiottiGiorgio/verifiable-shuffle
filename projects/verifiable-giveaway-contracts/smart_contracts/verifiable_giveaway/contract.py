@@ -79,10 +79,6 @@ from lib_pcg import pcg128_init, pcg128_random
 # Therefore, k fits in an 8-bit integer.
 
 
-# The amount of fractional bits calculated for the logarithm.
-LOGARITHM_FRACTIONAL_PRECISION = 10
-
-
 class Commitment(arc4.Struct, kw_only=True):
     tx_id: arc4.StaticArray[arc4.Byte, Literal[32]]
     round: arc4.UInt64
@@ -112,7 +108,7 @@ def binary_logarithm(n: UInt64) -> UInt64:
     if n == (1 << integer_component):
         return fractional_component
 
-    for _i in urange(LOGARITHM_FRACTIONAL_PRECISION):
+    for _i in urange(TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")):
         # n *= n
         square_high, square_low = op.addw(n, n)
         n = op.divw(square_high, square_low, 1 << integer_component)
@@ -125,7 +121,9 @@ def binary_logarithm(n: UInt64) -> UInt64:
         else:
             fractional_component <<= UInt64(1)
 
-    return (integer_component << LOGARITHM_FRACTIONAL_PRECISION) | fractional_component
+    return (
+        integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
+    ) | fractional_component
 
 
 class VerifiableGiveaway(ARC4Contract):
@@ -169,7 +167,9 @@ class VerifiableGiveaway(ARC4Contract):
             # We want to take an upper bound on the approximated logarithm.
             sum_of_logs += binary_logarithm(i) | UInt64(1)
             # Fail fast.
-            assert sum_of_logs <= (128 << LOGARITHM_FRACTIONAL_PRECISION)
+            assert sum_of_logs <= (
+                128 << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
+            )
 
         self.commitment[Txn.sender] = Commitment(
             tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(Txn.tx_id),

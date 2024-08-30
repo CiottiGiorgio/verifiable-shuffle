@@ -60,6 +60,7 @@ def verifiable_giveaway_client(
         template_values={
             "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
             "SAFETY_ROUND_GAP": 1,
+            "LOGARITHM_FRACTIONAL_PRECISION": 10,
         },
     )
 

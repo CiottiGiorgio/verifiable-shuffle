@@ -172,7 +172,9 @@ commit_for_header@1:
     +
     dup
     frame_bury 1
-    int 131072
+    int 128
+    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
+    shl
     <=
     assert
     int 1
@@ -269,7 +271,7 @@ binary_logarithm_after_if_else@2:
 
 binary_logarithm_for_header@3:
     frame_dig 0
-    int 10
+    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
     <
     bz binary_logarithm_after_for@9
     frame_dig -1
@@ -315,7 +317,7 @@ binary_logarithm_after_if_else@7:
 
 binary_logarithm_after_for@9:
     frame_dig 2
-    int 10
+    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
     shl
     frame_dig 3
     |
