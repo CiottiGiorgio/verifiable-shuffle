@@ -112,27 +112,20 @@ def binary_logarithm(n: UInt64) -> UInt64:
     if n == (1 << integer_component):
         return fractional_component
 
-    big_n = BigUInt(n)
     for _i in urange(LOGARITHM_FRACTIONAL_PRECISION):
         # n *= n
-        big_n = (big_n * big_n) // BigUInt(1 << integer_component)
+        square_high, square_low = op.addw(n, n)
+        n = op.divw(square_high, square_low, 1 << integer_component)
         # if n >= 2:
-        if big_n >= (2 << integer_component):
+        if n >= (2 << integer_component):
             fractional_component = (fractional_component << 1) | UInt64(1)
             # n /= 2
-            big_n = (big_n * BigUInt(1 << integer_component)) // BigUInt(
-                2 << integer_component
-            )
+            scaled_n_high, scaled_n_low = op.mulw(n, 1 << integer_component)
+            n = op.divw(scaled_n_high, scaled_n_low, 2 << integer_component)
         else:
             fractional_component <<= UInt64(1)
 
-    # We add the integer component to the fractional component AND we set the last bit to 1 because we want an
-    #  upper bound on the logarithm.
-    return (
-        (integer_component << LOGARITHM_FRACTIONAL_PRECISION)
-        | fractional_component
-        | UInt64(1)
-    )
+    return (integer_component << LOGARITHM_FRACTIONAL_PRECISION) | fractional_component
 
 
 class VerifiableGiveaway(ARC4Contract):
@@ -173,7 +166,8 @@ class VerifiableGiveaway(ARC4Contract):
         for i in urange(
             participants.native - winners.native + 1, participants.native + 1
         ):
-            sum_of_logs += binary_logarithm(i)
+            # We want to take an upper bound on the approximated logarithm.
+            sum_of_logs += binary_logarithm(i) | UInt64(1)
         assert sum_of_logs <= (128 << LOGARITHM_FRACTIONAL_PRECISION)
 
         self.commitment[Txn.sender] = Commitment(

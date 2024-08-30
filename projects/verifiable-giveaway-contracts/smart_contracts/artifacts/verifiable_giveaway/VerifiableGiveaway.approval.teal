@@ -166,6 +166,8 @@ commit_for_header@1:
     frame_dig 3
     dup
     callsub binary_logarithm
+    int 1
+    |
     frame_dig 1
     +
     frame_bury 1
@@ -241,9 +243,8 @@ ensure_budget_after_while@7:
 // smart_contracts.verifiable_giveaway.contract.binary_logarithm(n: uint64) -> uint64:
 binary_logarithm:
     proto 1 1
-    int 0
-    dupn 2
     byte ""
+    dup
     frame_dig -1
     bitlen
     int 1
@@ -263,69 +264,60 @@ binary_logarithm:
     retsub
 
 binary_logarithm_after_if_else@2:
-    frame_dig -1
-    itob
-    frame_bury 0
     int 0
-    frame_bury 3
+    frame_bury 0
 
 binary_logarithm_for_header@3:
-    frame_dig 3
+    frame_dig 0
     int 10
     <
     bz binary_logarithm_after_for@9
-    frame_dig 0
+    frame_dig -1
     dup
-    b*
-    frame_dig 6
-    itob
+    addw
+    frame_dig 4
+    divw
+    frame_bury -1
+    int 2
+    frame_dig 2
+    shl
     dup
     frame_bury 1
-    b/
-    dup
-    frame_bury 0
-    int 2
-    frame_dig 4
-    shl
-    itob
-    dup
-    frame_bury 2
-    b>=
+    frame_dig -1
+    <=
     bz binary_logarithm_else_body@6
-    frame_dig 5
+    frame_dig 3
     int 1
     shl
     int 1
     |
-    frame_bury 5
-    frame_dig 0
+    frame_bury 3
+    frame_dig -1
+    frame_dig 4
+    mulw
     frame_dig 1
-    b*
-    frame_dig 2
-    b/
-    frame_bury 0
+    divw
+    frame_bury -1
     b binary_logarithm_after_if_else@7
 
 binary_logarithm_else_body@6:
-    frame_dig 5
-    int 1
-    shl
-    frame_bury 5
-
-binary_logarithm_after_if_else@7:
     frame_dig 3
     int 1
-    +
+    shl
     frame_bury 3
+
+binary_logarithm_after_if_else@7:
+    frame_dig 0
+    int 1
+    +
+    frame_bury 0
     b binary_logarithm_for_header@3
 
 binary_logarithm_after_for@9:
-    frame_dig 4
+    frame_dig 2
     int 10
     shl
-    frame_dig 5
-    |
-    int 1
+    frame_dig 3
     |
     frame_bury 0
     retsub
