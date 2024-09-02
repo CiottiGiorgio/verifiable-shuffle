@@ -1,6 +1,7 @@
 from typing import Literal, Tuple
 
 from algopy import (
+    Application,
     ARC4Contract,
     BigUInt,
     Bytes,
@@ -143,7 +144,7 @@ class VerifiableGiveaway(ARC4Contract):
     #  the state won't change automatically after a contract update.
     @arc4.abimethod(readonly=True)
     def get_templated_randomness_beacon_id(self) -> UInt64:
-        return TemplateVar[UInt64]("RANDOMNESS_BEACON_ID")
+        return TemplateVar[Application]("RANDOMNESS_BEACON_ID").id
 
     @arc4.abimethod(readonly=True)
     def get_templated_safety_round_gap(self) -> UInt64:
@@ -195,7 +196,7 @@ class VerifiableGiveaway(ARC4Contract):
             "must_get",
             commitment.round,
             commitment.tx_id.bytes,
-            app_id=TemplateVar[UInt64]("RANDOMNESS_BEACON_ID"),
+            app_id=TemplateVar[Application]("RANDOMNESS_BEACON_ID").id,
         )
 
         state = pcg128_init(vrf_output.native)
