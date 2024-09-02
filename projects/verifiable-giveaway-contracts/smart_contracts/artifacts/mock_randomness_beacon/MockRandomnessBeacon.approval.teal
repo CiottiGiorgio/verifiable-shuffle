@@ -1,0 +1,47 @@
+#pragma version 10
+
+smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.approval_program:
+    txn NumAppArgs
+    bz main_bare_routing@5
+    method "must_get(uint64,byte[])byte[]"
+    txna ApplicationArgs 0
+    match main_must_get_route@2
+    err // reject transaction
+
+main_must_get_route@2:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    txna ApplicationArgs 1
+    txna ApplicationArgs 2
+    callsub must_get
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_bare_routing@5:
+    txn OnCompletion
+    !
+    assert // reject transaction
+    txn ApplicationID
+    !
+    assert // is creating
+    int 1
+    return
+
+
+// smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.must_get(round: bytes, user_data: bytes) -> bytes:
+must_get:
+    proto 2 1
+    byte TMPL_VRF_OUTPUT
+    len
+    itob
+    extract 6 2
+    byte TMPL_VRF_OUTPUT
+    concat
+    retsub

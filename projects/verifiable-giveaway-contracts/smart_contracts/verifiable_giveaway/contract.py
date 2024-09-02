@@ -20,6 +20,8 @@ from algopy import (
 )
 from lib_pcg import pcg128_init, pcg128_random
 
+import smart_contracts.verifiable_giveaway.errors as err
+
 # We desire to produce ordered k-permutations of the participants where n == participants, k == winners.
 # The algorithm that we use to generate k-permutations wouldn't change if we wished to generate combinations.
 # Therefore, the user could (wrongly) assume that it's equally safe to generate k-permutations or combination.
@@ -92,6 +94,7 @@ class Reveal(arc4.Struct, kw_only=True):
     winners: arc4.DynamicArray[arc4.UInt32]
 
 
+# FIXME: The resolution of the uint64 is not great, we can never get an upper bound. This needs more research.
 # https://mathsanew.com/articles/computing_logarithm_bit_by_bit.pdf
 # https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
 @subroutine
@@ -107,11 +110,11 @@ def binary_logarithm(n: UInt64) -> UInt64:
     # If n was a float at this point, this would be:
     # if n == 1:
     if n == (1 << integer_component):
-        return fractional_component
+        return integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
 
     for _i in urange(TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")):
         # n *= n
-        square_high, square_low = op.addw(n, n)
+        square_high, square_low = op.mulw(n, n)
         n = op.divw(square_high, square_low, 1 << integer_component)
         # if n >= 2:
         if n >= (2 << integer_component):
@@ -133,11 +136,11 @@ class VerifiableGiveaway(ARC4Contract):
 
     @arc4.baremethod(allow_actions=[OnCompleteAction.UpdateApplication])
     def update(self) -> None:
-        assert Txn.sender == Global.creator_address
+        assert Txn.sender == Global.creator_address, err.CREATOR
 
     @arc4.baremethod(allow_actions=[OnCompleteAction.DeleteApplication])
     def delete(self) -> None:
-        assert Txn.sender == Global.creator_address
+        assert Txn.sender == Global.creator_address, err.CREATOR
 
     # We need these getters because we are using template values.
     # If we store the template value in global state for easy reading,
@@ -154,11 +157,11 @@ class VerifiableGiveaway(ARC4Contract):
     def commit(
         self, delay: arc4.UInt8, participants: arc4.UInt32, winners: arc4.UInt8
     ) -> None:
-        assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native
+        assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native, err.SAFE_GAP
 
-        assert 1 <= winners.native
-        assert 2 <= participants.native
-        assert winners.native <= participants.native
+        assert 1 <= winners.native, err.MIN_WINNERS
+        assert 2 <= participants.native, err.MIN_PARTICIPANTS
+        assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
         ensure_budget(
             700 * TemplateVar[UInt64]("OPUP_CALLS_SAFETY_CHECK"),
@@ -170,10 +173,9 @@ class VerifiableGiveaway(ARC4Contract):
         ):
             # We want to take an upper bound on the approximated logarithm.
             sum_of_logs += binary_logarithm(i) + UInt64(1)
-            # Fail fast.
-            assert sum_of_logs <= (
-                128 << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
-            )
+        assert sum_of_logs <= (
+            128 << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
+        ), err.SAFE_SIZE
 
         self.commitment[Txn.sender] = Commitment(
             tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(Txn.tx_id),
@@ -190,7 +192,7 @@ class VerifiableGiveaway(ARC4Contract):
         committed_participants = commitment.participants.native
         committed_winners = commitment.winners.native
 
-        assert Global.round >= commitment.round.native
+        assert Global.round >= commitment.round.native, err.ROUND_ELAPSED
 
         vrf_output, _txn = arc4.abi_call[arc4.DynamicBytes](
             "must_get",

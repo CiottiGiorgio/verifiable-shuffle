@@ -1,5 +1,6 @@
 import base64
 import hashlib
+from typing import Tuple, List
 
 import algokit_utils
 import pytest
@@ -8,6 +9,7 @@ from algokit_utils import (
     EnsureBalanceParameters,
     TransactionParameters,
     get_localnet_default_account,
+    LogicError,
 )
 from algokit_utils.beta.account_manager import AddressAndSigner
 from algokit_utils.beta.algorand_client import AlgorandClient
@@ -21,6 +23,7 @@ from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_cli
 from smart_contracts.artifacts.verifiable_giveaway.verifiable_giveaway_client import (
     VerifiableGiveawayClient,
 )
+import smart_contracts.verifiable_giveaway.errors as err
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +31,7 @@ def mock_randomness_beacon_deployment(
     algod_client: AlgodClient, indexer_client: IndexerClient
 ) -> DeployResponse:
     config.configure(
-        debug=True,
+        debug=False,
         # trace_all=True,
     )
 
@@ -61,7 +64,7 @@ def verifiable_giveaway_client(
             "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
             "SAFETY_ROUND_GAP": 1,
             "LOGARITHM_FRACTIONAL_PRECISION": 10,
-            "OPUP_CALLS_SAFETY_CHECK": 10,
+            "OPUP_CALLS_SAFETY_CHECK": 30,
             "OPUP_CALLS_DICT_INIT": 5,
             "OPUP_CALLS_KNUTH_SHUFFLE": 15,
         },
@@ -107,20 +110,27 @@ def user_account(algorand_client: AlgorandClient) -> AddressAndSigner:
             16,
             [54, 160, 6, 130, 75, 4, 126, 207, 249, 103, 90, 134, 121, 86, 127, 165],
         ),
+        (
+            2**8 - 1,
+            16,
+            [54, 160, 6, 130, 75, 4, 126, 207, 249, 103, 90, 134, 121, 86, 127, 165],
+        ),
+        (2**16 - 1, 8, [65079, 39278, 24202, 18094, 24361, 54080, 9978, 5055]),
+        (2**32 - 1, 4, [3001830219, 3294283016, 4277628726, 2594649082]),
     ],
 )
-def test_shuffle(
+def test_sequence(
     algorand_client: AlgorandClient,
     verifiable_giveaway_client: VerifiableGiveawayClient,
     mock_randomness_beacon_deployment: DeployResponse,
     user_account: AddressAndSigner,
-    test_scenario: tuple[int, int, list[int]],
+    test_scenario: Tuple[int, int, List[int]],
 ) -> None:
     participants, winners, shuffled_winners = test_scenario
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 11_000
+    sp.fee = 31_000
 
     commit_result = verifiable_giveaway_client.opt_in_commit(
         delay=1,
@@ -152,3 +162,52 @@ def test_shuffle(
         == commit_result.tx_id
     )
     assert reveal_outcome.winners == shuffled_winners
+
+
+@pytest.mark.parametrize(
+    "test_scenario",
+    [
+        (2**32 - 1, 4),
+        (2**16 - 1, 8),
+        (2**8 - 1, 16),
+        (80, 20)
+    ],
+)
+def test_safety_bounds(
+    algorand_client: AlgorandClient,
+    verifiable_giveaway_client: VerifiableGiveawayClient,
+    user_account: AddressAndSigner,
+    test_scenario: Tuple[int, int],
+) -> None:
+    participants, winners = test_scenario
+
+    sp = algorand_client.client.algod.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 31_000
+
+    with pytest.raises(LogicError, match=err.SAFE_SIZE):
+        verifiable_giveaway_client.opt_in_commit(
+            delay=1,
+            participants=participants,
+            winners=winners + 1,
+            transaction_parameters=TransactionParameters(
+                signer=user_account.signer,
+                sender=user_account.address,
+                suggested_params=sp,
+            ),
+        )
+
+    verifiable_giveaway_client.opt_in_commit(
+        delay=1,
+        participants=participants,
+        winners=winners,
+        transaction_parameters=TransactionParameters(
+            signer=user_account.signer, sender=user_account.address, suggested_params=sp
+        ),
+    )
+
+    verifiable_giveaway_client.clear_state(
+        transaction_parameters=TransactionParameters(
+            signer=user_account.signer, sender=user_account.address
+        )
+    )

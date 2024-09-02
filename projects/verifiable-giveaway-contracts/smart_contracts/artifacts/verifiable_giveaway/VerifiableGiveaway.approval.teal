@@ -126,22 +126,22 @@ commit:
     dup
     int TMPL_SAFETY_ROUND_GAP
     >=
-    assert
+    assert // The round delay is less than the safety parameters
     frame_dig -1
     btoi
     dup
     int 1
     >=
-    assert
+    assert // There must be at least one winner
     frame_dig -2
     btoi
     dup
     int 2
     >=
-    assert
+    assert // There must be at least two participants
     dup2
     <=
-    assert
+    assert // Participants must be less than or equal to Winners
     int 700
     int TMPL_OPUP_CALLS_SAFETY_CHECK
     *
@@ -170,19 +170,19 @@ commit_for_header@1:
     +
     frame_dig 1
     +
-    dup
     frame_bury 1
-    int 128
-    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
-    shl
-    <=
-    assert
     int 1
     +
     frame_bury 3
     b commit_for_header@1
 
 commit_after_for@4:
+    int 128
+    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
+    shl
+    frame_dig 1
+    >=
+    assert // The number of k-permutation exceeds the safety parameters
     txn TxID
     global Round
     frame_dig 0
@@ -261,7 +261,9 @@ binary_logarithm:
     frame_dig -1
     ==
     bz binary_logarithm_after_if_else@2
-    int 0
+    frame_dig 2
+    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
+    shl
     frame_bury 0
     retsub
 
@@ -276,7 +278,7 @@ binary_logarithm_for_header@3:
     bz binary_logarithm_after_for@9
     frame_dig -1
     dup
-    addw
+    mulw
     frame_dig 4
     divw
     frame_bury -1
@@ -355,7 +357,7 @@ reveal:
     btoi
     uncover 2
     <=
-    assert
+    assert // The committed round has not elapsed yet
     itxn_begin
     swap
     extract 0 32 // on error: Index access is out of bounds
@@ -988,7 +990,7 @@ update:
     txn Sender
     global CreatorAddress
     ==
-    assert
+    assert // Address is not the creator
     retsub
 
 
@@ -998,5 +1000,5 @@ delete:
     txn Sender
     global CreatorAddress
     ==
-    assert
+    assert // Address is not the creator
     retsub

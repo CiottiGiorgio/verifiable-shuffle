@@ -180,10 +180,8 @@ version = "0.4.0"
 description = "Algorand Python testing library"
 optional = false
 python-versions = ">=3.12"
-files = [
-    {file = "algorand_python_testing-0.4.0-py3-none-any.whl", hash = "sha256:f3a84c4c64c054c2866becd72f87e6fc9222c4615d573ca842a93dd8afc778c6"},
-    {file = "algorand_python_testing-0.4.0.tar.gz", hash = "sha256:e9278305c8cad4093cb156f87917114868aa606ac6e0ed7816cb86c9d37adcfa"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 algorand-python = ">=2.0"
@@ -191,6 +189,12 @@ coincurve = ">=19.0.1"
 ecdsa = ">=0.17.0"
 pycryptodomex = ">=3.6.0,<4"
 pynacl = ">=1.4.0,<2"
+
+[package.source]
+type = "git"
+url = "https://github.com/algorandfoundation/algorand-python-testing.git"
+reference = "fix/kw-only-structs"
+resolved_reference = "1bb84afb710f9549fcb667eee855db2c8285a70c"
 
 [[package]]
 name = "anyio"
@@ -2131,4 +2135,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "b8b420e7e67450835c67ee6c4a2c2628117996cede2a41dbd3d6f3eb00a49b5f"
+content-hash = "057864f95e55760cdb1d3f3f411dfb0df8ae4681e6bf27fe37b6055ec129f7fe"
