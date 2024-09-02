@@ -167,7 +167,7 @@ commit_for_header@1:
     dup
     callsub binary_logarithm
     int 1
-    |
+    +
     frame_dig 1
     +
     dup

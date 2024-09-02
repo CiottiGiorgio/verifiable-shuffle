@@ -168,7 +168,7 @@ class VerifiableGiveaway(ARC4Contract):
             participants.native - winners.native + 1, participants.native + 1
         ):
             # We want to take an upper bound on the approximated logarithm.
-            sum_of_logs += binary_logarithm(i) | UInt64(1)
+            sum_of_logs += binary_logarithm(i) + UInt64(1)
             # Fail fast.
             assert sum_of_logs <= (
                 128 << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
