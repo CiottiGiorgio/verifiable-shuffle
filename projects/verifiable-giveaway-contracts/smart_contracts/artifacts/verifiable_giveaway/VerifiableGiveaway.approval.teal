@@ -122,7 +122,7 @@ get_templated_safety_round_gap:
 commit:
     proto 3 0
     byte ""
-    dupn 5
+    dupn 4
     frame_dig -3
     btoi
     dup
@@ -135,7 +135,7 @@ commit:
     int 1
     >=
     bz commit_bool_false@3
-    frame_dig 7
+    frame_dig 6
     int 34
     <=
     bz commit_bool_false@3
@@ -153,79 +153,72 @@ commit_bool_merge@4:
     int 2
     >=
     assert // There must be at least two participants
-    frame_dig 7
+    frame_dig 6
     dup
-    cover 2
-    dig 1
+    dig 2
     <=
     assert // Winners must be less than or equal to Participants
-    int 700
-    int TMPL_OPUP_CALLS_SAFETY_CHECK
+    dup
+    int TMPL_COMMIT_OPUP_SCALING_COST_CONSTANT
     *
     int 0
     callsub ensure_budget
     int 1
-    frame_bury 2
+    frame_bury 1
     int 0
-    frame_bury 4
-    dup
+    frame_bury 3
+    dig 1
     int 1
     +
-    frame_bury 5
-    swap
+    frame_bury 4
     -
     int 1
     +
-    frame_bury 1
+    frame_bury 0
 
 commit_for_header@5:
-    frame_dig 1
-    frame_dig 5
-    <
-    bz commit_after_for@14
-    frame_dig 2
-    frame_dig 1
-    mulw
-    frame_bury 0
-    dup
-    frame_bury 3
-    bz commit_ternary_false@8
-    frame_dig 3
-    b commit_ternary_merge@9
-
-commit_ternary_false@8:
     frame_dig 0
-    int 63
-    getbit
-
-commit_ternary_merge@9:
-    bz commit_else_body@11
-    frame_dig 2
-    callsub binary_logarithm
     frame_dig 4
-    +
-    frame_bury 4
+    <
+    bz commit_after_for@12
     frame_dig 1
+    frame_dig 0
+    mulw
     frame_bury 2
-    b commit_after_if_else@12
-
-commit_else_body@11:
+    bnz commit_if_body@8
     frame_dig 2
-    frame_dig 1
-    *
-    frame_bury 2
+    bitlen
+    int 64
+    ==
+    bz commit_else_body@9
 
-commit_after_if_else@12:
+commit_if_body@8:
     frame_dig 1
+    callsub binary_logarithm
+    frame_dig 3
+    +
+    frame_bury 3
+    frame_dig 0
+    frame_bury 1
+    b commit_after_if_else@10
+
+commit_else_body@9:
+    frame_dig 1
+    frame_dig 0
+    *
+    frame_bury 1
+
+commit_after_if_else@10:
+    frame_dig 0
     int 1
     +
-    frame_bury 1
+    frame_bury 0
     b commit_for_header@5
 
-commit_after_for@14:
-    frame_dig 2
+commit_after_for@12:
+    frame_dig 1
     callsub binary_logarithm
-    frame_dig 4
+    frame_dig 3
     +
     int 128
     int TMPL_LOGARITHM_FRACTIONAL_PRECISION
@@ -234,7 +227,7 @@ commit_after_for@14:
     assert // The number of k-permutation exceeds the safety parameters
     txn TxID
     global Round
-    frame_dig 6
+    frame_dig 5
     +
     itob
     concat
@@ -384,7 +377,7 @@ reveal:
     int 0
     dupn 4
     byte ""
-    dupn 8
+    dupn 12
     txn Sender
     int 0
     byte "commitment"
@@ -440,81 +433,78 @@ reveal:
     byte 0x151f7c75
     ==
     assert // ARC4 prefix is valid
-    extract 2 0
-    callsub pcg128_init
-    cover 3
-    cover 2
-    swap
-    int 700
-    int TMPL_OPUP_CALLS_DICT_INIT
-    *
-    int 0
-    callsub ensure_budget
     int 0
 
 reveal_for_header@2:
-    frame_dig 21
-    int 200
+    frame_dig 22
+    int TMPL_NUMBER_OF_DICT_BINS
     <
     bz reveal_after_for@5
-    frame_dig 21
+    frame_dig 22
     dup
     byte 0x
     stores
     int 1
     +
-    frame_bury 21
+    frame_bury 22
     b reveal_for_header@2
 
 reveal_after_for@5:
-    frame_dig 15
-    frame_dig 14
+    frame_dig 19
+    dup
+    int TMPL_REVEAL_OPUP_SCALING_COST_CONSTANT
+    *
+    int 0
+    callsub ensure_budget
+    frame_dig 18
     <
     bz reveal_ternary_false@7
-    frame_dig 15
+    frame_dig 19
     frame_bury 11
     b reveal_ternary_merge@8
 
 reveal_ternary_false@7:
-    frame_dig 15
+    frame_dig 19
     int 1
     -
     frame_bury 11
 
 reveal_ternary_merge@8:
-    int 700
-    int TMPL_OPUP_CALLS_KNUTH_SHUFFLE
-    *
-    int 0
-    callsub ensure_budget
+    frame_dig 21
+    extract 2 0
+    callsub pcg128_init
+    frame_bury 15
+    frame_bury 14
+    frame_bury 13
+    frame_bury 12
     byte 0x0000
     frame_bury 3
     int 0
-    frame_bury 21
+    frame_bury 22
 
 reveal_for_header@9:
-    frame_dig 21
+    frame_dig 22
     frame_dig 11
     <
     bz reveal_after_for@24
-    frame_dig 21
+    frame_dig 22
     dup
     itob
-    frame_dig 14
-    itob
-    frame_dig 20
-    frame_dig 19
     frame_dig 18
-    frame_dig 17
+    itob
+    frame_dig 12
+    frame_dig 13
+    frame_dig 14
+    frame_dig 15
     uncover 5
     uncover 5
     int 1
     callsub pcg128_random
     cover 4
-    frame_bury 17
-    frame_bury 18
-    frame_bury 19
-    frame_bury 20
+    frame_bury 15
+    frame_bury 14
+    frame_bury 13
+    frame_bury 12
     extract 2 0
     extract 0 16 // on error: Index access is out of bounds
     int 12
@@ -522,7 +512,7 @@ reveal_for_header@9:
     dup
     frame_bury 7
     dig 1
-    int 200
+    int TMPL_NUMBER_OF_DICT_BINS
     %
     loads
     uncover 2
@@ -531,10 +521,10 @@ reveal_for_header@9:
     pop
     frame_bury 5
     dup
-    int 200
+    int TMPL_NUMBER_OF_DICT_BINS
     %
     dup
-    frame_bury 12
+    frame_bury 16
     loads
     dup
     frame_bury 1
@@ -576,14 +566,14 @@ reveal_ternary_merge@13:
     frame_dig 9
     int 4
     +
-    frame_bury 13
+    frame_bury 17
     frame_dig 5
     bz reveal_ternary_false@16
     frame_dig 6
     b reveal_ternary_merge@17
 
 reveal_ternary_false@16:
-    frame_dig 21
+    frame_dig 22
     int 1
     +
 
@@ -591,7 +581,7 @@ reveal_ternary_merge@17:
     itob
     extract 4 4
     frame_dig 1
-    frame_dig 13
+    frame_dig 17
     uncover 2
     replace3
     frame_bury 1
@@ -608,7 +598,7 @@ reveal_else_body@18:
     b reveal_ternary_merge@21
 
 reveal_ternary_false@20:
-    frame_dig 21
+    frame_dig 22
     int 1
     +
 
@@ -624,28 +614,28 @@ reveal_ternary_merge@21:
     frame_bury 1
 
 reveal_after_if_else@22:
-    frame_dig 12
+    frame_dig 16
     frame_dig 1
     stores
-    frame_dig 21
+    frame_dig 22
     int 1
     +
-    frame_bury 21
+    frame_bury 22
     b reveal_for_header@9
 
 reveal_after_for@24:
-    frame_dig 14
-    frame_dig 15
+    frame_dig 18
+    frame_dig 19
     ==
     frame_dig 3
     frame_bury 4
     bz reveal_after_if_else@26
-    frame_dig 15
+    frame_dig 19
     dup
     int 1
     -
     dup
-    int 200
+    int TMPL_NUMBER_OF_DICT_BINS
     %
     loads
     swap
@@ -673,7 +663,7 @@ reveal_after_for@24:
 
 reveal_after_if_else@26:
     frame_dig 4
-    frame_dig 16
+    frame_dig 20
     byte 0x0022
     concat
     swap

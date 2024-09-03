@@ -17,8 +17,8 @@ from algokit_utils.config import config
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
-import smart_contracts.verifiable_giveaway.errors as err
 import smart_contracts.verifiable_giveaway.config as cfg
+import smart_contracts.verifiable_giveaway.errors as err
 from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
     MockRandomnessBeaconClient,
 )
@@ -64,10 +64,10 @@ def verifiable_giveaway_client(
         template_values={
             cfg.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
             cfg.SAFETY_GAP: 1,
-            cfg.LOG_PRECISION: 20,
-            "OPUP_CALLS_SAFETY_CHECK": 5,
-            "OPUP_CALLS_DICT_INIT": 5,
-            "OPUP_CALLS_KNUTH_SHUFFLE": 15,
+            cfg.LOG_PRECISION: 15,
+            cfg.BINS: 11,
+            "COMMIT_OPUP_SCALING_COST_CONSTANT": 700,
+            "REVEAL_OPUP_SCALING_COST_CONSTANT": 600,
         },
     )
 
@@ -131,7 +131,7 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 6_000
+    sp.fee = 100_000
 
     commit_result = verifiable_giveaway_client.opt_in_commit(
         delay=1,
@@ -146,7 +146,7 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 21_000
+    sp.fee = 100_000
 
     reveal_result = verifiable_giveaway_client.close_out_reveal(
         transaction_parameters=TransactionParameters(
@@ -186,7 +186,7 @@ def test_safety_bounds(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 6_000
+    sp.fee = 100_000
 
     with pytest.raises(LogicError, match=err.SAFE_SIZE):
         verifiable_giveaway_client.opt_in_commit(
@@ -234,7 +234,7 @@ def test_safety_bounds(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 6_000
+    sp.fee = 100_000
 
     verifiable_giveaway_client.opt_in_commit(
         delay=1,

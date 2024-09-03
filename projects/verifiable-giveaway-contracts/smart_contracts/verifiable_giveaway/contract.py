@@ -162,16 +162,17 @@ class VerifiableGiveaway(ARC4Contract):
         assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
         ensure_budget(
-            700 * TemplateVar[UInt64]("OPUP_CALLS_SAFETY_CHECK"),
+            winners.native * TemplateVar[UInt64]("COMMIT_OPUP_SCALING_COST_CONSTANT"),
             OpUpFeeSource.GroupCredit,
         )
+
         log_arg = UInt64(1)
         sum_of_logs = UInt64(0)
         for i in urange(
             participants.native - winners.native + 1, participants.native + 1
         ):
-            overflow, _low = op.mulw(log_arg, i)
-            if overflow or op.getbit(_low, 63):
+            overflow, low = op.mulw(log_arg, i)
+            if overflow or op.bitlen(low) == 64:
                 sum_of_logs += binary_logarithm(log_arg)
                 log_arg = i
             else:
@@ -206,13 +207,16 @@ class VerifiableGiveaway(ARC4Contract):
             app_id=TemplateVar[Application](cfg.RANDOMNESS_BEACON).id,
         )
 
-        state = pcg128_init(vrf_output.native)
-
-        ensure_budget(
-            700 * TemplateVar[UInt64]("OPUP_CALLS_DICT_INIT"), OpUpFeeSource.GroupCredit
-        )
-        for i in urange(200):
+        for i in urange(TemplateVar[UInt64](cfg.BINS)):
             op.Scratch.store(i, Bytes())
+
+        # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
+        #  and the contract should protect the user/funding account.
+        ensure_budget(
+            committed_winners
+            * TemplateVar[UInt64]("REVEAL_OPUP_SCALING_COST_CONSTANT"),
+            OpUpFeeSource.GroupCredit,
+        )
 
         # Knuth shuffle.
         # We don't create a pre-initialized array of elements from 1 to n because
@@ -229,12 +233,7 @@ class VerifiableGiveaway(ARC4Contract):
             if committed_winners < committed_participants
             else committed_winners - 1
         )
-        # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
-        #  and the contract should protect the user/funding account.
-        ensure_budget(
-            700 * TemplateVar[UInt64]("OPUP_CALLS_KNUTH_SHUFFLE"),
-            OpUpFeeSource.GroupCredit,
-        )
+        state = pcg128_init(vrf_output.native)
         winners = arc4.DynamicArray[arc4.UInt32]()
         for i in urange(n_shuffles):
             state, sequence = pcg128_random(
@@ -245,10 +244,10 @@ class VerifiableGiveaway(ARC4Contract):
             )
             j = op.extract_uint32(sequence[0].bytes, 12)
 
-            i_bin = op.Scratch.load_bytes(i % UInt64(200))
+            i_bin = op.Scratch.load_bytes(i % TemplateVar[UInt64](cfg.BINS))
             i_found, i_pos, i_value = linear_search(i_bin, i)
 
-            j_bin = op.Scratch.load_bytes(j % UInt64(200))
+            j_bin = op.Scratch.load_bytes(j % TemplateVar[UInt64](cfg.BINS))
             j_found, j_pos, j_value = linear_search(j_bin, j)
 
             winners.append(arc4.UInt32(j_value if j_found else j + 1))
@@ -262,11 +261,13 @@ class VerifiableGiveaway(ARC4Contract):
                     arc4.UInt32(j).bytes
                     + arc4.UInt32(i_value if i_found else i + 1).bytes
                 )
-            op.Scratch.store(j % UInt64(200), j_bin)
+            op.Scratch.store(j % TemplateVar[UInt64](cfg.BINS), j_bin)
 
         if committed_participants == committed_winners:
             found, _pos, last_winner = linear_search(
-                op.Scratch.load_bytes((committed_winners - UInt64(1)) % UInt64(200)),
+                op.Scratch.load_bytes(
+                    (committed_winners - UInt64(1)) % TemplateVar[UInt64](cfg.BINS)
+                ),
                 committed_winners - UInt64(1),
             )
             winners.append(arc4.UInt32(last_winner if found else committed_winners))
