@@ -105,24 +105,22 @@ def binary_logarithm(n: UInt64) -> UInt64:
     # As we don't have access to floats, we will interpret from now on n as a fixed-point number.
     # The implicit scaling factor is integer_component.
 
-    fractional_component = UInt64(0)
-
     # If n was a float at this point, this would be:
     # if n == 1:
     if n == (1 << integer_component):
         return integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
 
+    fractional_component = UInt64(0)
     for _i in urange(TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")):
+        fractional_component <<= 1
         # n *= n
         square_high, square_low = op.mulw(n, n)
         n = op.divw(square_high, square_low, 1 << integer_component)
         # if n >= 2:
         if n >= (2 << integer_component):
-            fractional_component = (fractional_component << 1) | 1
+            fractional_component |= 1
             # n /= 2
             n >>= 1
-        else:
-            fractional_component <<= 1
 
     return (
         integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
