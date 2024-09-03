@@ -121,8 +121,6 @@ get_templated_safety_round_gap:
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.commit(delay: bytes, participants: bytes, winners: bytes) -> void:
 commit:
     proto 3 0
-    byte ""
-    dupn 4
     frame_dig -3
     btoi
     dup
@@ -135,7 +133,7 @@ commit:
     int 1
     >=
     bz commit_bool_false@3
-    frame_dig 6
+    frame_dig 1
     int 34
     <=
     bz commit_bool_false@3
@@ -153,7 +151,7 @@ commit_bool_merge@4:
     int 2
     >=
     assert // There must be at least two participants
-    frame_dig 6
+    frame_dig 1
     dup
     dig 2
     <=
@@ -163,63 +161,15 @@ commit_bool_merge@4:
     *
     int 0
     callsub ensure_budget
-    int 1
-    frame_bury 1
-    int 0
-    frame_bury 3
     dig 1
-    int 1
-    +
-    frame_bury 4
+    swap
     -
     int 1
     +
-    frame_bury 0
-
-commit_for_header@5:
-    frame_dig 0
-    frame_dig 4
-    <
-    bz commit_after_for@12
-    frame_dig 1
-    frame_dig 0
-    mulw
-    frame_bury 2
-    bnz commit_if_body@8
-    frame_dig 2
-    bitlen
-    int 64
-    ==
-    bz commit_else_body@9
-
-commit_if_body@8:
-    frame_dig 1
-    callsub binary_logarithm
-    frame_dig 3
-    +
-    frame_bury 3
-    frame_dig 0
-    frame_bury 1
-    b commit_after_if_else@10
-
-commit_else_body@9:
-    frame_dig 1
-    frame_dig 0
-    *
-    frame_bury 1
-
-commit_after_if_else@10:
-    frame_dig 0
+    swap
     int 1
     +
-    frame_bury 0
-    b commit_for_header@5
-
-commit_after_for@12:
-    frame_dig 1
-    callsub binary_logarithm
-    frame_dig 3
-    +
+    callsub sum_logs
     int 128
     int TMPL_LOGARITHM_FRACTIONAL_PRECISION
     shl
@@ -227,7 +177,7 @@ commit_after_for@12:
     assert // The number of k-permutation exceeds the safety parameters
     txn TxID
     global Round
-    frame_dig 5
+    frame_dig 0
     +
     itob
     concat
@@ -281,6 +231,62 @@ ensure_budget_switch_case_next@6:
     b ensure_budget_while_top@1
 
 ensure_budget_after_while@7:
+    retsub
+
+
+// smart_contracts.verifiable_giveaway.contract.sum_logs(start: uint64, end: uint64) -> uint64:
+sum_logs:
+    proto 2 1
+    byte ""
+    int 1
+    int 0
+    frame_dig -2
+
+sum_logs_for_header@1:
+    frame_dig 3
+    frame_dig -1
+    <
+    bz sum_logs_after_for@8
+    frame_dig 1
+    frame_dig 3
+    mulw
+    frame_bury 0
+    bnz sum_logs_if_body@4
+    frame_dig 0
+    bitlen
+    int 64
+    ==
+    bz sum_logs_else_body@5
+
+sum_logs_if_body@4:
+    frame_dig 1
+    callsub binary_logarithm
+    frame_dig 2
+    +
+    frame_bury 2
+    frame_dig 3
+    frame_bury 1
+    b sum_logs_after_if_else@6
+
+sum_logs_else_body@5:
+    frame_dig 1
+    frame_dig 3
+    *
+    frame_bury 1
+
+sum_logs_after_if_else@6:
+    frame_dig 3
+    int 1
+    +
+    frame_bury 3
+    b sum_logs_for_header@1
+
+sum_logs_after_for@8:
+    frame_dig 1
+    callsub binary_logarithm
+    frame_dig 2
+    +
+    frame_bury 0
     retsub
 
 

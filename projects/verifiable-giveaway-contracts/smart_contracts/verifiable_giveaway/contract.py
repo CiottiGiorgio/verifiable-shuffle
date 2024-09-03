@@ -128,6 +128,23 @@ def binary_logarithm(n: UInt64) -> UInt64:
     ) | fractional_component
 
 
+@subroutine
+def sum_logs(start: UInt64, end: UInt64) -> UInt64:
+    log_arg = UInt64(1)
+    sum_of_logs = UInt64(0)
+
+    for i in urange(start, end):
+        overflow, low = op.mulw(log_arg, i)
+        if overflow or op.bitlen(low) == 64:
+            sum_of_logs += binary_logarithm(log_arg)
+            log_arg = i
+        else:
+            log_arg *= i
+    sum_of_logs += binary_logarithm(log_arg)
+
+    return sum_of_logs
+
+
 class VerifiableGiveaway(ARC4Contract):
     def __init__(self) -> None:
         self.commitment = LocalState(Commitment)
@@ -166,19 +183,9 @@ class VerifiableGiveaway(ARC4Contract):
             OpUpFeeSource.GroupCredit,
         )
 
-        log_arg = UInt64(1)
-        sum_of_logs = UInt64(0)
-        for i in urange(
+        sum_of_logs = sum_logs(
             participants.native - winners.native + 1, participants.native + 1
-        ):
-            overflow, low = op.mulw(log_arg, i)
-            if overflow or op.bitlen(low) == 64:
-                sum_of_logs += binary_logarithm(log_arg)
-                log_arg = i
-            else:
-                log_arg *= i
-        sum_of_logs += binary_logarithm(log_arg)
-
+        )
         assert sum_of_logs <= (
             128 << TemplateVar[UInt64](cfg.LOG_PRECISION)
         ), err.SAFE_SIZE
