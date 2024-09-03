@@ -56,7 +56,8 @@ import smart_contracts.verifiable_giveaway.errors as err
 # In natural language, the sum of the logarithms of the numbers from n to n-k+1.
 # This sum must be less than or equal to 128.
 
-# For any #participants == n, the number of possible k-permutations is minimized by k == 1.
+# For any #participants == n, the number of possible k-permutations is minimized by k == 0.
+# For our purposes, k is at least 1 so let's consider k == 1.
 # Since:
 # - log2(n! / (n-1)!) = log2(n)
 # - log2(2^128 - 1) ~ 127,999
