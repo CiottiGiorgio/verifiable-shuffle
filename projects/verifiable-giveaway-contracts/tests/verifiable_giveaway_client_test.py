@@ -63,8 +63,8 @@ def verifiable_giveaway_client(
         template_values={
             "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
             "SAFETY_ROUND_GAP": 1,
-            "LOGARITHM_FRACTIONAL_PRECISION": 10,
-            "OPUP_CALLS_SAFETY_CHECK": 30,
+            "LOGARITHM_FRACTIONAL_PRECISION": 20,
+            "OPUP_CALLS_SAFETY_CHECK": 50,
             "OPUP_CALLS_DICT_INIT": 5,
             "OPUP_CALLS_KNUTH_SHUFFLE": 15,
         },
@@ -130,7 +130,7 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 31_000
+    sp.fee = 61_000
 
     commit_result = verifiable_giveaway_client.opt_in_commit(
         delay=1,
@@ -170,7 +170,9 @@ def test_sequence(
         (2**32 - 1, 4),
         (2**16 - 1, 8),
         (2**8 - 1, 16),
-        (80, 20)
+        (80, 20),
+        (47, 25),
+        (35, 30),
     ],
 )
 def test_safety_bounds(
@@ -183,7 +185,7 @@ def test_safety_bounds(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 31_000
+    sp.fee = 61_000
 
     with pytest.raises(LogicError, match=err.SAFE_SIZE):
         verifiable_giveaway_client.opt_in_commit(

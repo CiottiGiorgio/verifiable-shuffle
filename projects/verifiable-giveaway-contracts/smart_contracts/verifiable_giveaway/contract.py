@@ -102,8 +102,10 @@ def binary_logarithm(n: UInt64) -> UInt64:
     integer_component = op.bitlen(n) - UInt64(1)
 
     # We should now compute the fractional component of the logarithm with n / 2^integer_component as a float.
-    # As we don't have access to floats, we will interpret from now on n as a fixed-point number with
-    #  integer_component number of binary fractional digits.
+    # As we don't have access to floats, we will interpret from now on n as a fixed-point number.
+    # The implicit scaling factor is 2 times the integer component.
+    # We can do this because we know that n is less than 2^32 and so n will fit in an uint64
+    #  and therefore the not scaled back fits in an uin128.
 
     fractional_component = UInt64(0)
 
@@ -112,16 +114,18 @@ def binary_logarithm(n: UInt64) -> UInt64:
     if n == (1 << integer_component):
         return integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
 
+    n <<= integer_component
+    scaling_factor = 2 * integer_component
     for _i in urange(TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")):
         # n *= n
         square_high, square_low = op.mulw(n, n)
-        n = op.divw(square_high, square_low, 1 << integer_component)
+        n = op.divw(square_high, square_low, 1 << scaling_factor)
         # if n >= 2:
-        if n >= (2 << integer_component):
+        if n >= (2 << scaling_factor):
             fractional_component = (fractional_component << 1) | UInt64(1)
             # n /= 2
-            scaled_n_high, scaled_n_low = op.mulw(n, 1 << integer_component)
-            n = op.divw(scaled_n_high, scaled_n_low, 2 << integer_component)
+            scaled_n_high, scaled_n_low = op.mulw(n, 1 << scaling_factor)
+            n = op.divw(scaled_n_high, scaled_n_low, 2 << scaling_factor)
         else:
             fractional_component <<= UInt64(1)
 
