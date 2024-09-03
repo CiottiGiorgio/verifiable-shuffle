@@ -1,15 +1,15 @@
 import base64
 import hashlib
-from typing import Tuple, List
+from typing import List, Tuple
 
 import algokit_utils
 import pytest
 from algokit_utils import (
     DeployResponse,
     EnsureBalanceParameters,
+    LogicError,
     TransactionParameters,
     get_localnet_default_account,
-    LogicError,
 )
 from algokit_utils.beta.account_manager import AddressAndSigner
 from algokit_utils.beta.algorand_client import AlgorandClient
@@ -17,13 +17,14 @@ from algokit_utils.config import config
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
+import smart_contracts.verifiable_giveaway.errors as err
+import smart_contracts.verifiable_giveaway.config as cfg
 from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
     MockRandomnessBeaconClient,
 )
 from smart_contracts.artifacts.verifiable_giveaway.verifiable_giveaway_client import (
     VerifiableGiveawayClient,
 )
-import smart_contracts.verifiable_giveaway.errors as err
 
 
 @pytest.fixture(scope="session")
@@ -61,9 +62,9 @@ def verifiable_giveaway_client(
         creator=get_localnet_default_account(algod_client),
         indexer_client=indexer_client,
         template_values={
-            "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
-            "SAFETY_ROUND_GAP": 1,
-            "LOGARITHM_FRACTIONAL_PRECISION": 20,
+            cfg.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
+            cfg.SAFETY_GAP: 1,
+            cfg.LOG_PRECISION: 20,
             "OPUP_CALLS_SAFETY_CHECK": 5,
             "OPUP_CALLS_DICT_INIT": 5,
             "OPUP_CALLS_KNUTH_SHUFFLE": 15,

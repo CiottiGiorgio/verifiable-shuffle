@@ -107,7 +107,7 @@ main_reject_bare_on_completion@12:
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.get_templated_randomness_beacon_id() -> uint64:
 get_templated_randomness_beacon_id:
     proto 0 1
-    int TMPL_RANDOMNESS_BEACON_ID
+    int TMPL_RANDOMNESS_BEACON
     retsub
 
 
@@ -420,7 +420,7 @@ reveal:
     extract 6 2
     swap
     concat
-    int TMPL_RANDOMNESS_BEACON_ID
+    int TMPL_RANDOMNESS_BEACON
     itxn_field ApplicationID
     method "must_get(uint64,byte[])byte[]"
     itxn_field ApplicationArgs

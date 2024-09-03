@@ -1,12 +1,12 @@
 from collections.abc import Iterator
-from hashlib import sha3_256
-from typing import Literal
 
 import algopy
 import pytest
-from algopy_testing import AlgopyTestContext, algopy_testing_context, arc4_prefix
+from algopy_testing import AlgopyTestContext, algopy_testing_context
 
-from smart_contracts.verifiable_giveaway.contract import Commitment, VerifiableGiveaway, binary_logarithm
+from smart_contracts.verifiable_giveaway.contract import (
+    binary_logarithm,
+)
 
 
 @pytest.fixture()
@@ -18,7 +18,7 @@ def context() -> Iterator[AlgopyTestContext]:
 def test_binary_logarithm(context: AlgopyTestContext) -> None:
     # Arrange
     context.set_template_var("LOGARITHM_FRACTIONAL_PRECISION", algopy.UInt64(10))
-    result = sum(((binary_logarithm(x) + 1) for x in range(61, 81)))
+    result = sum((binary_logarithm(x) + 1) for x in range(61, 81))
 
     assert result == 1
 

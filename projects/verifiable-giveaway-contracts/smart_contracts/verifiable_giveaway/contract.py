@@ -20,6 +20,7 @@ from algopy import (
 )
 from lib_pcg import pcg128_init, pcg128_random
 
+import smart_contracts.verifiable_giveaway.config as cfg
 import smart_contracts.verifiable_giveaway.errors as err
 
 # We desire to produce ordered k-permutations of the participants where n == participants, k == winners.
@@ -108,10 +109,10 @@ def binary_logarithm(n: UInt64) -> UInt64:
     # If n was a float at this point, this would be:
     # if n == 1:
     if n == (1 << integer_component):
-        return integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
+        return integer_component << TemplateVar[UInt64](cfg.LOG_PRECISION)
 
     fractional_component = UInt64(0)
-    for _i in urange(TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")):
+    for _i in urange(TemplateVar[UInt64](cfg.LOG_PRECISION)):
         fractional_component <<= 1
         # n *= n
         square_high, square_low = op.mulw(n, n)
@@ -123,7 +124,7 @@ def binary_logarithm(n: UInt64) -> UInt64:
             n >>= 1
 
     return (
-        integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
+        integer_component << TemplateVar[UInt64](cfg.LOG_PRECISION)
     ) | fractional_component
 
 
@@ -144,17 +145,17 @@ class VerifiableGiveaway(ARC4Contract):
     #  the state won't change automatically after a contract update.
     @arc4.abimethod(readonly=True)
     def get_templated_randomness_beacon_id(self) -> UInt64:
-        return TemplateVar[Application]("RANDOMNESS_BEACON_ID").id
+        return TemplateVar[Application](cfg.RANDOMNESS_BEACON).id
 
     @arc4.abimethod(readonly=True)
     def get_templated_safety_round_gap(self) -> UInt64:
-        return TemplateVar[UInt64]("SAFETY_ROUND_GAP")
+        return TemplateVar[UInt64](cfg.SAFETY_GAP)
 
     @arc4.abimethod(allow_actions=[OnCompleteAction.NoOp, OnCompleteAction.OptIn])
     def commit(
         self, delay: arc4.UInt8, participants: arc4.UInt32, winners: arc4.UInt8
     ) -> None:
-        assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native, err.SAFE_GAP
+        assert TemplateVar[UInt64](cfg.SAFETY_GAP) <= delay.native, err.SAFE_GAP
 
         assert 1 <= winners.native <= 34, err.WINNERS_BOUND
         assert 2 <= participants.native, err.MIN_PARTICIPANTS
@@ -178,7 +179,7 @@ class VerifiableGiveaway(ARC4Contract):
         sum_of_logs += binary_logarithm(log_arg)
 
         assert sum_of_logs <= (
-            128 << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
+            128 << TemplateVar[UInt64](cfg.LOG_PRECISION)
         ), err.SAFE_SIZE
 
         self.commitment[Txn.sender] = Commitment(
@@ -202,7 +203,7 @@ class VerifiableGiveaway(ARC4Contract):
             "must_get",
             commitment.round,
             commitment.tx_id.bytes,
-            app_id=TemplateVar[Application]("RANDOMNESS_BEACON_ID").id,
+            app_id=TemplateVar[Application](cfg.RANDOMNESS_BEACON).id,
         )
 
         state = pcg128_init(vrf_output.native)
