@@ -98,7 +98,7 @@ class Reveal(arc4.Struct, kw_only=True):
 # https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
 @subroutine
 def binary_logarithm(n: UInt64) -> UInt64:
-    integer_component = op.bitlen(n) - UInt64(1)
+    integer_component = op.bitlen(n) - 1
 
     # We should now compute the fractional component of the logarithm with n / 2^integer_component as a float.
     # As we don't have access to floats, we will interpret from now on n as a fixed-point number.
@@ -117,11 +117,11 @@ def binary_logarithm(n: UInt64) -> UInt64:
         n = op.divw(square_high, square_low, 1 << integer_component)
         # if n >= 2:
         if n >= (2 << integer_component):
-            fractional_component = (fractional_component << 1) | UInt64(1)
+            fractional_component = (fractional_component << 1) | 1
             # n /= 2
             n >>= 1
         else:
-            fractional_component <<= UInt64(1)
+            fractional_component <<= 1
 
     return (
         integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
