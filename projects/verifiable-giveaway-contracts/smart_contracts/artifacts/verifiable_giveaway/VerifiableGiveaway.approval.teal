@@ -122,7 +122,7 @@ get_templated_safety_round_gap:
 commit:
     proto 3 0
     byte ""
-    dup
+    dupn 5
     frame_dig -3
     btoi
     dup
@@ -134,14 +134,29 @@ commit:
     dup
     int 1
     >=
-    assert // There must be at least one winner
+    bz commit_bool_false@3
+    frame_dig 7
+    int 34
+    <=
+    bz commit_bool_false@3
+    int 1
+    b commit_bool_merge@4
+
+commit_bool_false@3:
+    int 0
+
+commit_bool_merge@4:
+    assert // There must be at least one winner and less than 34
     frame_dig -2
     btoi
     dup
     int 2
     >=
     assert // There must be at least two participants
-    dup2
+    frame_dig 7
+    dup
+    cover 2
+    dig 1
     <=
     assert // Winners must be less than or equal to Participants
     int 700
@@ -150,64 +165,65 @@ commit:
     int 0
     callsub ensure_budget
     int 1
-    cover 2
+    frame_bury 2
     int 0
-    cover 2
+    frame_bury 4
     dup
     int 1
     +
-    cover 2
+    frame_bury 5
     swap
     -
     int 1
     +
+    frame_bury 1
 
-commit_for_header@1:
-    frame_dig 6
+commit_for_header@5:
+    frame_dig 1
     frame_dig 5
     <
-    bz commit_after_for@10
-    frame_dig 3
-    frame_dig 6
+    bz commit_after_for@14
+    frame_dig 2
+    frame_dig 1
     mulw
     frame_bury 0
     dup
-    frame_bury 1
-    bz commit_ternary_false@4
-    frame_dig 1
-    b commit_ternary_merge@5
+    frame_bury 3
+    bz commit_ternary_false@8
+    frame_dig 3
+    b commit_ternary_merge@9
 
-commit_ternary_false@4:
+commit_ternary_false@8:
     frame_dig 0
     int 63
     getbit
 
-commit_ternary_merge@5:
-    bz commit_else_body@7
-    frame_dig 3
+commit_ternary_merge@9:
+    bz commit_else_body@11
+    frame_dig 2
     callsub binary_logarithm
     frame_dig 4
     +
     frame_bury 4
-    frame_dig 6
-    frame_bury 3
-    b commit_after_if_else@8
+    frame_dig 1
+    frame_bury 2
+    b commit_after_if_else@12
 
-commit_else_body@7:
-    frame_dig 3
-    frame_dig 6
+commit_else_body@11:
+    frame_dig 2
+    frame_dig 1
     *
-    frame_bury 3
+    frame_bury 2
 
-commit_after_if_else@8:
-    frame_dig 6
+commit_after_if_else@12:
+    frame_dig 1
     int 1
     +
-    frame_bury 6
-    b commit_for_header@1
+    frame_bury 1
+    b commit_for_header@5
 
-commit_after_for@10:
-    frame_dig 3
+commit_after_for@14:
+    frame_dig 2
     callsub binary_logarithm
     frame_dig 4
     +
@@ -218,7 +234,7 @@ commit_after_for@10:
     assert // The number of k-permutation exceeds the safety parameters
     txn TxID
     global Round
-    frame_dig 2
+    frame_dig 6
     +
     itob
     concat

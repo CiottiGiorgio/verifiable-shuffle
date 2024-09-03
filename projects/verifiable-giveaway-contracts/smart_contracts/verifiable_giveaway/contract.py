@@ -158,7 +158,7 @@ class VerifiableGiveaway(ARC4Contract):
     ) -> None:
         assert TemplateVar[UInt64]("SAFETY_ROUND_GAP") <= delay.native, err.SAFE_GAP
 
-        assert 1 <= winners.native, err.MIN_WINNERS
+        assert 1 <= winners.native <= 34, err.WINNERS_BOUND
         assert 2 <= participants.native, err.MIN_PARTICIPANTS
         assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
