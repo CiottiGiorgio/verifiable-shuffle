@@ -235,7 +235,7 @@ class VerifiableGiveaway(ARC4Contract):
             700 * TemplateVar[UInt64]("OPUP_CALLS_KNUTH_SHUFFLE"),
             OpUpFeeSource.GroupCredit,
         )
-        winners = arc4.UInt16(committed_winners).bytes
+        winners = arc4.DynamicArray[arc4.UInt32]()
         for i in urange(n_shuffles):
             state, sequence = pcg128_random(
                 state,
@@ -251,7 +251,7 @@ class VerifiableGiveaway(ARC4Contract):
             j_bin = op.Scratch.load_bytes(j % UInt64(200))
             j_found, j_pos, j_value = linear_search(j_bin, j)
 
-            winners += arc4.UInt32(j_value if j_found else j + 1).bytes
+            winners.append(arc4.UInt32(j_value if j_found else j + 1))
 
             if j_found:
                 j_bin = op.replace(
@@ -269,11 +269,11 @@ class VerifiableGiveaway(ARC4Contract):
                 op.Scratch.load_bytes((committed_winners - UInt64(1)) % UInt64(200)),
                 committed_winners - UInt64(1),
             )
-            winners += arc4.UInt32(last_winner if found else committed_winners).bytes
+            winners.append(arc4.UInt32(last_winner if found else committed_winners))
 
         return Reveal(
             commitment_tx_id=commitment.tx_id.copy(),
-            winners=arc4.DynamicArray[arc4.UInt32].from_bytes(winners),
+            winners=winners.copy(),
         )
 
 
