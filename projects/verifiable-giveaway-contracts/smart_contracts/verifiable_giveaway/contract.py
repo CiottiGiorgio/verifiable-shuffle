@@ -94,7 +94,6 @@ class Reveal(arc4.Struct, kw_only=True):
     winners: arc4.DynamicArray[arc4.UInt32]
 
 
-# FIXME: The resolution of the uint64 is not great, we can never get an upper bound. This needs more research.
 # https://mathsanew.com/articles/computing_logarithm_bit_by_bit.pdf
 # https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
 @subroutine
@@ -103,9 +102,7 @@ def binary_logarithm(n: UInt64) -> UInt64:
 
     # We should now compute the fractional component of the logarithm with n / 2^integer_component as a float.
     # As we don't have access to floats, we will interpret from now on n as a fixed-point number.
-    # The implicit scaling factor is 2 times the integer component.
-    # We can do this because we know that n is less than 2^32 and so n will fit in an uint64
-    #  and therefore the not scaled back fits in an uin128.
+    # The implicit scaling factor is integer_component.
 
     fractional_component = UInt64(0)
 
@@ -114,18 +111,15 @@ def binary_logarithm(n: UInt64) -> UInt64:
     if n == (1 << integer_component):
         return integer_component << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
 
-    n <<= integer_component
-    scaling_factor = 2 * integer_component
     for _i in urange(TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")):
         # n *= n
         square_high, square_low = op.mulw(n, n)
-        n = op.divw(square_high, square_low, 1 << scaling_factor)
+        n = op.divw(square_high, square_low, 1 << integer_component)
         # if n >= 2:
-        if n >= (2 << scaling_factor):
+        if n >= (2 << integer_component):
             fractional_component = (fractional_component << 1) | UInt64(1)
             # n /= 2
-            scaled_n_high, scaled_n_low = op.mulw(n, 1 << scaling_factor)
-            n = op.divw(scaled_n_high, scaled_n_low, 2 << scaling_factor)
+            n >>= 1
         else:
             fractional_component <<= UInt64(1)
 
@@ -171,12 +165,19 @@ class VerifiableGiveaway(ARC4Contract):
             700 * TemplateVar[UInt64]("OPUP_CALLS_SAFETY_CHECK"),
             OpUpFeeSource.GroupCredit,
         )
+        log_arg = UInt64(1)
         sum_of_logs = UInt64(0)
         for i in urange(
             participants.native - winners.native + 1, participants.native + 1
         ):
-            # We want to take an upper bound on the approximated logarithm.
-            sum_of_logs += binary_logarithm(i) + UInt64(1)
+            overflow, _low = op.mulw(log_arg, i)
+            if overflow or op.getbit(_low, 63):
+                sum_of_logs += binary_logarithm(log_arg)
+                log_arg = i
+            else:
+                log_arg *= i
+        sum_of_logs += binary_logarithm(log_arg)
+
         assert sum_of_logs <= (
             128 << TemplateVar[UInt64]("LOGARITHM_FRACTIONAL_PRECISION")
         ), err.SAFE_SIZE

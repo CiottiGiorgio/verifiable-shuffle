@@ -31,7 +31,7 @@ def mock_randomness_beacon_deployment(
     algod_client: AlgodClient, indexer_client: IndexerClient
 ) -> DeployResponse:
     config.configure(
-        debug=False,
+        debug=True,
         # trace_all=True,
     )
 
@@ -64,7 +64,7 @@ def verifiable_giveaway_client(
             "RANDOMNESS_BEACON_ID": mock_randomness_beacon_deployment.app.app_id,
             "SAFETY_ROUND_GAP": 1,
             "LOGARITHM_FRACTIONAL_PRECISION": 20,
-            "OPUP_CALLS_SAFETY_CHECK": 50,
+            "OPUP_CALLS_SAFETY_CHECK": 5,
             "OPUP_CALLS_DICT_INIT": 5,
             "OPUP_CALLS_KNUTH_SHUFFLE": 15,
         },
@@ -130,7 +130,7 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 61_000
+    sp.fee = 6_000
 
     commit_result = verifiable_giveaway_client.opt_in_commit(
         delay=1,
@@ -185,7 +185,7 @@ def test_safety_bounds(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 61_000
+    sp.fee = 6_000
 
     with pytest.raises(LogicError, match=err.SAFE_SIZE):
         verifiable_giveaway_client.opt_in_commit(
@@ -198,6 +198,42 @@ def test_safety_bounds(
                 suggested_params=sp,
             ),
         )
+
+    verifiable_giveaway_client.opt_in_commit(
+        delay=1,
+        participants=participants,
+        winners=winners,
+        transaction_parameters=TransactionParameters(
+            signer=user_account.signer, sender=user_account.address, suggested_params=sp
+        ),
+    )
+
+    verifiable_giveaway_client.clear_state(
+        transaction_parameters=TransactionParameters(
+            signer=user_account.signer, sender=user_account.address
+        )
+    )
+
+
+# We can't test that this will fail for winners+1 because that would mean we have more winners than
+#  participants.
+@pytest.mark.parametrize(
+    "test_scenario",
+    [
+        (34, 34),
+    ],
+)
+def test_safety_bounds(
+    algorand_client: AlgorandClient,
+    verifiable_giveaway_client: VerifiableGiveawayClient,
+    user_account: AddressAndSigner,
+    test_scenario: Tuple[int, int],
+) -> None:
+    participants, winners = test_scenario
+
+    sp = algorand_client.client.algod.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 6_000
 
     verifiable_giveaway_client.opt_in_commit(
         delay=1,

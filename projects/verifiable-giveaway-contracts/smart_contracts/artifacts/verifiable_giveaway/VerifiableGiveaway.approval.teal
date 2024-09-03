@@ -121,6 +121,8 @@ get_templated_safety_round_gap:
 // smart_contracts.verifiable_giveaway.contract.VerifiableGiveaway.commit(delay: bytes, participants: bytes, winners: bytes) -> void:
 commit:
     proto 3 0
+    byte ""
+    dup
     frame_dig -3
     btoi
     dup
@@ -141,12 +143,14 @@ commit:
     assert // There must be at least two participants
     dup2
     <=
-    assert // Participants must be less than or equal to Winners
+    assert // Winners must be less than or equal to Participants
     int 700
     int TMPL_OPUP_CALLS_SAFETY_CHECK
     *
     int 0
     callsub ensure_budget
+    int 1
+    cover 2
     int 0
     cover 2
     dup
@@ -159,33 +163,62 @@ commit:
     +
 
 commit_for_header@1:
-    frame_dig 3
-    frame_dig 2
+    frame_dig 6
+    frame_dig 5
     <
-    bz commit_after_for@4
+    bz commit_after_for@10
     frame_dig 3
+    frame_dig 6
+    mulw
+    frame_bury 0
     dup
-    callsub binary_logarithm
-    int 1
-    +
-    frame_dig 1
-    +
     frame_bury 1
+    bz commit_ternary_false@4
+    frame_dig 1
+    b commit_ternary_merge@5
+
+commit_ternary_false@4:
+    frame_dig 0
+    int 63
+    getbit
+
+commit_ternary_merge@5:
+    bz commit_else_body@7
+    frame_dig 3
+    callsub binary_logarithm
+    frame_dig 4
+    +
+    frame_bury 4
+    frame_dig 6
+    frame_bury 3
+    b commit_after_if_else@8
+
+commit_else_body@7:
+    frame_dig 3
+    frame_dig 6
+    *
+    frame_bury 3
+
+commit_after_if_else@8:
+    frame_dig 6
     int 1
     +
-    frame_bury 3
+    frame_bury 6
     b commit_for_header@1
 
-commit_after_for@4:
+commit_after_for@10:
+    frame_dig 3
+    callsub binary_logarithm
+    frame_dig 4
+    +
     int 128
     int TMPL_LOGARITHM_FRACTIONAL_PRECISION
     shl
-    frame_dig 1
-    >=
+    <=
     assert // The number of k-permutation exceeds the safety parameters
     txn TxID
     global Round
-    frame_dig 0
+    frame_dig 2
     +
     itob
     concat
@@ -246,7 +279,6 @@ ensure_budget_after_while@7:
 binary_logarithm:
     proto 1 1
     byte ""
-    dupn 3
     frame_dig -1
     bitlen
     int 1
@@ -257,25 +289,17 @@ binary_logarithm:
     int 1
     swap
     shl
+    dup
     frame_dig -1
     ==
     bz binary_logarithm_after_if_else@2
-    frame_dig 4
+    frame_dig 1
     int TMPL_LOGARITHM_FRACTIONAL_PRECISION
     shl
     frame_bury 0
     retsub
 
 binary_logarithm_after_if_else@2:
-    frame_dig -1
-    frame_dig 4
-    dup
-    cover 2
-    shl
-    frame_bury -1
-    int 2
-    *
-    frame_bury 1
     int 0
     frame_bury 0
 
@@ -287,45 +311,32 @@ binary_logarithm_for_header@3:
     frame_dig -1
     dup
     mulw
-    swap
-    int 1
-    frame_dig 1
-    dup
-    cover 4
-    shl
-    dup
-    frame_bury 2
-    swap
-    cover 2
+    frame_dig 3
     divw
     frame_bury -1
     int 2
-    swap
+    frame_dig 1
     shl
-    dup
-    frame_bury 3
     frame_dig -1
     <=
     bz binary_logarithm_else_body@6
-    frame_dig 5
+    frame_dig 2
     int 1
     shl
     int 1
     |
-    frame_bury 5
+    frame_bury 2
     frame_dig -1
-    frame_dig 2
-    mulw
-    frame_dig 3
-    divw
+    int 1
+    shr
     frame_bury -1
     b binary_logarithm_after_if_else@7
 
 binary_logarithm_else_body@6:
-    frame_dig 5
+    frame_dig 2
     int 1
     shl
-    frame_bury 5
+    frame_bury 2
 
 binary_logarithm_after_if_else@7:
     frame_dig 0
@@ -335,10 +346,10 @@ binary_logarithm_after_if_else@7:
     b binary_logarithm_for_header@3
 
 binary_logarithm_after_for@9:
-    frame_dig 4
+    frame_dig 1
     int TMPL_LOGARITHM_FRACTIONAL_PRECISION
     shl
-    frame_dig 5
+    frame_dig 2
     |
     frame_bury 0
     retsub
