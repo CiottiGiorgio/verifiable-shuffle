@@ -23,6 +23,7 @@ from lib_pcg import pcg128_init, pcg128_random
 import smart_contracts.verifiable_giveaway.config as cfg
 import smart_contracts.verifiable_giveaway.errors as err
 
+# Safety argument:
 # We desire to produce ordered k-permutations of the participants where n == participants, k == winners.
 # The algorithm that we use to generate k-permutations wouldn't change if we wished to generate combinations.
 # Therefore, the user could (wrongly) assume that it's equally safe to generate k-permutations or combination.
@@ -96,23 +97,68 @@ class Reveal(arc4.Struct, kw_only=True):
     winners: arc4.DynamicArray[arc4.UInt32]
 
 
+# TODO: We need more unit testing on the numerical stability of this algorithm.
+# TODO: We need more error analysis given the bits used for n and the bits of the fractional
+#  part we wish to compute.
+# It was already attempted to re-write this function in terms of BigUInt math to allow for
+#  larger arguments.
+# That version was much more expensive from an opcode budget perspective.
+# If today's precision is acceptable and within reasonable opcode economy, it's best to leave it as is.
 # https://mathsanew.com/articles/computing_logarithm_bit_by_bit.pdf
 # https://en.wikipedia.org/wiki/Binary_logarithm#Iterative_approximation
 @subroutine
-def binary_logarithm(n: UInt64) -> UInt64:
-    integer_component = op.bitlen(n) - 1
+def binary_logarithm(n: UInt64, m: UInt64) -> UInt64:
+    """Approximates the binary logarithm of an integer using an iterative approach.
 
-    # We should now compute the fractional component of the logarithm with n / 2^integer_component as a float.
-    # As we don't have access to floats, we will interpret from now on n as a fixed-point number.
-    # The implicit scaling factor is integer_component.
+    This function computes the integer part of the logarithm by looking at the Most Set Bit (MSB).
+    The fractional part of the logarithm is approximated by discovering one bit with each iteration.
+
+    The underlying property that we are leveraging is that log(x^2) == 2log(x), which means we
+     can iteratively square the argument and discover the next fractional bit of the logarithm.
+
+    This algorithm is sensitive to the precision of the input integer. The more bits of the argument,
+     the better the result.
+    The integer can be divided by 2 with each iteration, in which case we lose one bit of information.
+    Squaring doesn't add any bit of information even if it makes the number larger.
+    For this reason, we try to use this function with the largest uint64 possible.
+
+    The algorithm assumes that n is divided by the largest power of two it can take before computing
+     the fractional part of the logarithm (this will always be 2^(integer part)).
+    Stated alternatively, the fractional part assumes the input is between 1 and 2 (not included).
+    It's at least one because we are computing the logarithm of a natural number.
+    It's less than two because, if it wasn't, it could've been divided by a larger power of two.
+
+    As we don't have access to floats and would like to use the cheapest AVM math available,
+     we can't divide n by the largest power of two it can take.
+    Instead, we will interpret n as a fixed point number with an implicit scaling factor of that same
+     largest power of two.
+    We can safely and cheaply compute any math involving 64-bit fix point numbers thanks to wide arithmetic.
+
+    It should be noted that squaring any number between (1, 2] could result in any number between (1, 4].
+    Therefore, for n >= sqrt(2) and scaling factor = 2^64, the result will be a 65-bit number.
+    Stated alternatively, if n >= sqrt(2) then n^2 >= 2 which means the result needs 64 bits to fit.
+    63 bits for the fractional part and 2 bits for the integer part.
+    Everytime n >= 2, we divide it by 2 so we never exceed 65 bits ever.
+
+    With all this in mind, the argument to this function should be the largest integer that fits into 63 bits.
+
+    Args:
+        n: The integer that is the argument of the binary logarithm
+        m: The numer of iterations to compute the fractional part or, equivalently,
+            the number of bits to compute of the fractional part
+
+    Returns:
+        A fixed point number with an implicit scaling factor of 2^m.
+    """
+    integer_component = op.bitlen(n) - 1
 
     # If n was a float at this point, this would be:
     # if n == 1:
     if n == (1 << integer_component):
-        return integer_component << TemplateVar[UInt64](cfg.LOG_PRECISION)
+        return integer_component << m
 
     fractional_component = UInt64(0)
-    for _i in urange(TemplateVar[UInt64](cfg.LOG_PRECISION)):
+    for _i in urange(m):
         fractional_component <<= 1
         # n *= n
         square_high, square_low = op.mulw(n, n)
@@ -123,24 +169,46 @@ def binary_logarithm(n: UInt64) -> UInt64:
             # n /= 2
             n >>= 1
 
-    return (
-        integer_component << TemplateVar[UInt64](cfg.LOG_PRECISION)
-    ) | fractional_component
+    return (integer_component << m) | fractional_component
 
 
+# TODO: We need more unit testing on the numerical stability of this algorithm.
 @subroutine
-def sum_logs(start: UInt64, end: UInt64) -> UInt64:
+def sum_logs(start: UInt64, end: UInt64, m: UInt64) -> UInt64:
+    """Finds a numerically stable way to compute the binary logarithm of the #k-permutations.
+
+    Recall that:
+    log2(n! / (n-k)!) = log2(n * (n-1) * ... * (n-k+1)) = log2(n) + log2(n-1) + ... + log2(n-k+1)
+
+    For reasons highlighted in the binary_logarithm docstring, we want to call it with the largest integer
+     that fits in 63 bits.
+
+    Following from the log laws:
+    log2(n) + ... + log2(n-3) = log2(n * (n-1)) + log2((n-2) * (n-3))
+
+    This loop will do the product of the consecutive integers until it's too big and only then compute the binary log.
+    Also, this allows us to reduce the number of calls to binary_logarithm.
+
+    Args:
+        start: The first integer in the product (included)
+        end: The last integer outside the product (not included)
+        m: The numer of iterations to compute the fractional part or, equivalently,
+            the number of bits to compute of the fractional part
+
+    Returns:
+        A fixed point number with an implicit scaling factor of 2^m.
+    """
     log_arg = UInt64(1)
     sum_of_logs = UInt64(0)
 
     for i in urange(start, end):
         overflow, low = op.mulw(log_arg, i)
         if overflow or op.bitlen(low) == 64:
-            sum_of_logs += binary_logarithm(log_arg)
+            sum_of_logs += binary_logarithm(log_arg, m)
             log_arg = i
         else:
             log_arg *= i
-    sum_of_logs += binary_logarithm(log_arg)
+    sum_of_logs += binary_logarithm(log_arg, m)
 
     return sum_of_logs
 
@@ -184,7 +252,9 @@ class VerifiableGiveaway(ARC4Contract):
         )
 
         sum_of_logs = sum_logs(
-            participants.native - winners.native + 1, participants.native + 1
+            participants.native - winners.native + 1,
+            participants.native + 1,
+            TemplateVar[UInt64](cfg.LOG_PRECISION),
         )
         assert sum_of_logs <= (
             128 << TemplateVar[UInt64](cfg.LOG_PRECISION)
