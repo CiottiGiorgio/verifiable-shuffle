@@ -218,7 +218,7 @@ def test_safety_bounds(
         (34, 34),
     ],
 )
-def test_safety_bounds(
+def test_special_case(
     algorand_client: AlgorandClient,
     verifiable_giveaway_client: VerifiableGiveawayClient,
     user_account: AddressAndSigner,
