@@ -139,7 +139,7 @@ def binary_logarithm(n: UInt64, m: UInt64) -> UInt64:
 
     It should be noted that squaring any number between (1, 2] could result in any number between (1, 4].
     Therefore, for n >= sqrt(2) and scaling factor = 2^64, the result will be a 65-bit number.
-    Stated alternatively, if n >= sqrt(2) then n^2 >= 2 which means the result needs 64 bits to fit.
+    Stated alternatively, if n >= sqrt(2) then n^2 >= 2 which means the result needs 65 bits to fit.
     63 bits for the fractional part and 2 bits for the integer part.
     Everytime n >= 2, we divide it by 2 so we never exceed 65 bits ever.
 
