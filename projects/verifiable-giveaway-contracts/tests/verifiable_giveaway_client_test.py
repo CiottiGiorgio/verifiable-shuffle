@@ -65,7 +65,6 @@ def verifiable_giveaway_client(
             cfg.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
             cfg.SAFETY_GAP: 1,
             cfg.LOG_PRECISION: 16,
-            cfg.BINS: 11,
             "COMMIT_OPUP_SCALING_COST_CONSTANT": 700,
             "REVEAL_OPUP_SCALING_COST_CONSTANT": 600,
         },

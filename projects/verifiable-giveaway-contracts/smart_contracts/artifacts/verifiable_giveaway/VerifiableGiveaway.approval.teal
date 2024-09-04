@@ -462,7 +462,7 @@ reveal:
 
 reveal_for_header@2:
     frame_dig 19
-    int TMPL_NUMBER_OF_DICT_BINS
+    int 11
     <
     bz reveal_after_for@5
     frame_dig 19
@@ -536,7 +536,7 @@ reveal_for_header@9:
     extract_uint32
     frame_bury 5
     dup
-    int TMPL_NUMBER_OF_DICT_BINS
+    int 11
     %
     loads
     swap
@@ -557,7 +557,7 @@ reveal_ternary_false@12:
 reveal_ternary_merge@13:
     frame_dig 5
     dup
-    int TMPL_NUMBER_OF_DICT_BINS
+    int 11
     %
     dup
     frame_bury 14
@@ -644,7 +644,7 @@ reveal_after_for@21:
     int 1
     -
     dup
-    int TMPL_NUMBER_OF_DICT_BINS
+    int 11
     %
     loads
     swap

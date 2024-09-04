@@ -216,7 +216,7 @@ def sum_logs(start: UInt64, end: UInt64, m: UInt64) -> UInt64:
     return sum_of_logs
 
 
-class VerifiableGiveaway(ARC4Contract):
+class VerifiableGiveaway(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
     def __init__(self) -> None:
         self.commitment = LocalState(Commitment)
 
@@ -287,7 +287,7 @@ class VerifiableGiveaway(ARC4Contract):
             app_id=TemplateVar[Application](cfg.RANDOMNESS_BEACON).id,
         )
 
-        for i in urange(TemplateVar[UInt64](cfg.BINS)):
+        for i in urange(cfg.BINS):
             op.Scratch.store(i, Bytes())
 
         # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
@@ -328,11 +328,11 @@ class VerifiableGiveaway(ARC4Contract):
             # a[i] and a[j] have possibly already been written to so we need to look them
             #  up in the dictionary.
             i_found, i_pos, i_maybe = linear_search(
-                op.Scratch.load_bytes(i % TemplateVar[UInt64](cfg.BINS)), i
+                op.Scratch.load_bytes(i % cfg.BINS), i
             )
             i_value = i_maybe if i_found else i + 1
 
-            j_bin = op.Scratch.load_bytes(j % TemplateVar[UInt64](cfg.BINS))
+            j_bin = op.Scratch.load_bytes(j % cfg.BINS)
             j_found, j_pos, j_maybe = linear_search(j_bin, j)
             j_value = j_maybe if j_found else j + 1
 
@@ -347,7 +347,7 @@ class VerifiableGiveaway(ARC4Contract):
                 j_bin = op.replace(j_bin, j_pos + 4, arc4.UInt32(i_value).bytes)
             else:
                 j_bin += arc4.UInt32(j).bytes + arc4.UInt32(i_value).bytes
-            op.Scratch.store(j % TemplateVar[UInt64](cfg.BINS), j_bin)
+            op.Scratch.store(j % cfg.BINS, j_bin)
 
         # When #participants == #winners, we skip the last iteration because:
         # - It swaps the element with itself which is pointless.
@@ -356,7 +356,7 @@ class VerifiableGiveaway(ARC4Contract):
         if committed_participants == committed_winners:
             key = committed_winners - UInt64(1)
             found, _pos, last_winner = linear_search(
-                op.Scratch.load_bytes(key % TemplateVar[UInt64](cfg.BINS)),
+                op.Scratch.load_bytes(key % cfg.BINS),
                 key,
             )
             winners.append(arc4.UInt32(last_winner if found else committed_winners))
