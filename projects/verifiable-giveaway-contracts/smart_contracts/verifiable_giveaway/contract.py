@@ -74,6 +74,9 @@ import smart_contracts.verifiable_giveaway.errors as err
 # If participants was a 64-bit number, it would allow for 2 winners at most, but we could use native uint64 math.
 # We are going to assume that participants is a 32-bit number because it allows 4 winners in the worst case
 #  and native uint64 math.
+# We also require the number of participants to be less than 2^32-1 because we want to shuffle an array
+#  of values from 1 to n+1 (not from 0 to n).
+# If n = 2^32-1, then the last element is 2^32 which is unrepresentable with 32-bit.
 
 # For any #winners == k, the number of possible k-permutations is minimized by n == k.
 # Since:
@@ -242,8 +245,8 @@ class VerifiableGiveaway(ARC4Contract):
     ) -> None:
         assert TemplateVar[UInt64](cfg.SAFETY_GAP) <= delay.native, err.SAFE_GAP
 
-        assert 1 <= winners.native <= 34, err.WINNERS_BOUND
-        assert 2 <= participants.native, err.MIN_PARTICIPANTS
+        assert 1 <= winners.native < 35, err.WINNERS_BOUND
+        assert 2 <= participants.native < 2**32-1, err.PARTICIPANTS_BOUND
         assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
         ensure_budget(

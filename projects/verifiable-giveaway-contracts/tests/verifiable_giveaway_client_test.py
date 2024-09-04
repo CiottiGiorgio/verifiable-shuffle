@@ -32,7 +32,7 @@ def mock_randomness_beacon_deployment(
     algod_client: AlgodClient, indexer_client: IndexerClient
 ) -> DeployResponse:
     config.configure(
-        debug=True,
+        debug=False,
         # trace_all=True,
     )
 
