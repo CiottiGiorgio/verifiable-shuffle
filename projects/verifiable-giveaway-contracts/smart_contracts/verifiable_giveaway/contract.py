@@ -246,7 +246,7 @@ class VerifiableGiveaway(ARC4Contract):
         assert TemplateVar[UInt64](cfg.SAFETY_GAP) <= delay.native, err.SAFE_GAP
 
         assert 1 <= winners.native < 35, err.WINNERS_BOUND
-        assert 2 <= participants.native < 2**32-1, err.PARTICIPANTS_BOUND
+        assert 2 <= participants.native < 2**32 - 1, err.PARTICIPANTS_BOUND
         assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
         ensure_budget(
@@ -324,31 +324,40 @@ class VerifiableGiveaway(ARC4Contract):
             )
             j = op.extract_uint32(sequence[0].bytes, 12)
 
-            i_bin = op.Scratch.load_bytes(i % TemplateVar[UInt64](cfg.BINS))
-            i_found, i_pos, i_value = linear_search(i_bin, i)
+            # Here we "just" need to swap a[i] with a[j].
+            # a[i] and a[j] have possibly already been written to so we need to look them
+            #  up in the dictionary.
+            i_found, i_pos, i_maybe = linear_search(
+                op.Scratch.load_bytes(i % TemplateVar[UInt64](cfg.BINS)), i
+            )
+            i_value = i_maybe if i_found else i + 1
 
             j_bin = op.Scratch.load_bytes(j % TemplateVar[UInt64](cfg.BINS))
-            j_found, j_pos, j_value = linear_search(j_bin, j)
+            j_found, j_pos, j_maybe = linear_search(j_bin, j)
+            j_value = j_maybe if j_found else j + 1
 
-            winners.append(arc4.UInt32(j_value if j_found else j + 1))
+            # a[i] <- a[j]
+            # We can just append to the actual winners array because index i will never be
+            #  read or written to ever again.
+            # For the same reason, we don't need to update the key i in the dictionary.
+            winners.append(arc4.UInt32(j_value))
 
+            # a[j] <- a[i]
             if j_found:
-                j_bin = op.replace(
-                    j_bin, j_pos + 4, arc4.UInt32(i_value if i_found else i + 1).bytes
-                )
+                j_bin = op.replace(j_bin, j_pos + 4, arc4.UInt32(i_value).bytes)
             else:
-                j_bin += (
-                    arc4.UInt32(j).bytes
-                    + arc4.UInt32(i_value if i_found else i + 1).bytes
-                )
+                j_bin += arc4.UInt32(j).bytes + arc4.UInt32(i_value).bytes
             op.Scratch.store(j % TemplateVar[UInt64](cfg.BINS), j_bin)
 
+        # When #participants == #winners, we skip the last iteration because:
+        # - It swaps the element with itself which is pointless.
+        # - pcg128 would error when asked to generate a number with a range of only 1 possibility.
+        # In such case, we just want to read it from the dictionary and append it.
         if committed_participants == committed_winners:
+            key = committed_winners - UInt64(1)
             found, _pos, last_winner = linear_search(
-                op.Scratch.load_bytes(
-                    (committed_winners - UInt64(1)) % TemplateVar[UInt64](cfg.BINS)
-                ),
-                committed_winners - UInt64(1),
+                op.Scratch.load_bytes(key % TemplateVar[UInt64](cfg.BINS)),
+                key,
             )
             winners.append(arc4.UInt32(last_winner if found else committed_winners))
 
