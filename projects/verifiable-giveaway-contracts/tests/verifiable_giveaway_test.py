@@ -1,3 +1,4 @@
+import math
 from collections.abc import Iterator
 
 import algopy
@@ -15,12 +16,36 @@ def context() -> Iterator[AlgopyTestContext]:
         yield ctx
 
 
-def test_binary_logarithm(context: AlgopyTestContext) -> None:
-    # Arrange
-    context.set_template_var("LOGARITHM_FRACTIONAL_PRECISION", algopy.UInt64(10))
-    result = sum((binary_logarithm(x) + 1) for x in range(61, 81))
+@pytest.mark.parametrize(
+    "n",
+    [
+        2**1,
+        2**2 - 1,
+        10,
+        2**4 - 1,
+        2**5 - 1,
+        2**6 - 1,
+        100,
+        2**7 - 1,
+        1000,
+        2**10 - 1,
+        2**10,
+        2**16 - 1,
+        2**16,
+        2**32 - 1,
+        2**32,
+        2**63 - 1,
+    ],
+)
+def test_binary_logarithm(n: int) -> None:
+    """
+    Makes sure that the approximated binary logarithm computed in the AVM is equal
+     to the correct one up to the precision we require.
+    """
+    result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(16))
 
-    assert result == 1
+    expected_log = int(math.log2(n) * 2**16)
+    assert abs(expected_log - result.value) / expected_log < 0.001
 
 
 # def test_reveal(context: AlgopyTestContext) -> None:
