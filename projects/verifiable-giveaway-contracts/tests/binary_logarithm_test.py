@@ -17,7 +17,7 @@ def context() -> Iterator[AlgopyTestContext]:
         yield ctx
 
 
-@pytest.mark.parametrize("n,log_n", [(2**i, i) for i in range(64)])
+@pytest.mark.parametrize("n,log_n", ((2**i, i) for i in range(64)))
 def test_perfect_binary_logarithm(n: int, log_n: int) -> None:
     """Makes sure that the AVM approximated log2 of a perfect power of two is always exactly correct."""
     result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(cfg.LOG_PRECISION))
@@ -39,10 +39,10 @@ def test_perfect_binary_logarithm(n: int, log_n: int) -> None:
     ],
 )
 def test_small_binary_logarithm(n: int, relative_error: float) -> None:
-    """Makes sure that the AVM approximated log2 of a small integer (<= 1_000) is within a known good relative error."""
+    """Makes sure that the AVM approximated log2 of a small integer (<= 1_000) is within a good known relative error."""
     result = binary_logarithm(algopy.UInt64(n), cfg.LOG_PRECISION)
 
-    expected_log = int(math.log2(n) * 2**16)
+    expected_log = int(math.log2(n) * 2**cfg.LOG_PRECISION)
     assert abs(expected_log - result.value) / expected_log <= relative_error
 
 
@@ -56,7 +56,7 @@ def test_small_binary_logarithm(n: int, relative_error: float) -> None:
     ],
 )
 def test_large_binary_logarithm(n: int) -> None:
-    """Makes sure that the AVM approximated log2 of a large integer (> 1_000) is within a known good relative error."""
+    """Makes sure that the AVM approximated log2 of a large integer (> 1_000) is within a good known relative error."""
     result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(cfg.LOG_PRECISION))
 
     expected_log = int(math.log2(n) * 2**cfg.LOG_PRECISION)

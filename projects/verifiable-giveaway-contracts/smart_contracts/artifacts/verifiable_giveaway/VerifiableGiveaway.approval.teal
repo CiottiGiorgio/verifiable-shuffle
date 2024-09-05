@@ -177,19 +177,9 @@ commit_bool_merge@8:
     *
     int 0
     callsub ensure_budget
-    dig 1
-    swap
-    -
-    int 1
-    +
-    swap
-    int 1
-    +
-    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
-    callsub sum_logs
-    int 128
-    int TMPL_LOGARITHM_FRACTIONAL_PRECISION
-    shl
+    int 16
+    callsub k_permutation_logarithm
+    int 8388608
     <=
     assert // The number of k-permutation exceeds the safety parameters
     txn TxID
@@ -251,55 +241,62 @@ ensure_budget_after_while@7:
     retsub
 
 
-// smart_contracts.verifiable_giveaway.contract.sum_logs(start: uint64, end: uint64, m: uint64) -> uint64:
-sum_logs:
+// smart_contracts.verifiable_giveaway.contract.k_permutation_logarithm(n: uint64, k: uint64, m: uint64) -> uint64:
+k_permutation_logarithm:
     proto 3 1
     byte ""
     int 1
     int 0
     frame_dig -3
-
-sum_logs_for_header@1:
-    frame_dig 3
+    int 1
+    +
+    frame_dig -3
     frame_dig -2
-    <
-    bz sum_logs_after_for@8
-    frame_dig 1
+    -
+    int 1
+    +
+
+k_permutation_logarithm_for_header@1:
+    frame_dig 4
     frame_dig 3
+    <
+    bz k_permutation_logarithm_after_for@8
+    frame_dig 1
+    frame_dig 4
     mulw
     frame_bury 0
-    bnz sum_logs_if_body@4
+    bnz k_permutation_logarithm_if_body@4
     frame_dig 0
     bitlen
     int 64
     ==
-    bz sum_logs_else_body@5
+    bz k_permutation_logarithm_else_body@5
 
-sum_logs_if_body@4:
+k_permutation_logarithm_if_body@4:
     frame_dig 1
     frame_dig -1
     callsub binary_logarithm
     frame_dig 2
     +
     frame_bury 2
-    frame_dig 3
+    frame_dig 4
     frame_bury 1
-    b sum_logs_after_if_else@6
+    b k_permutation_logarithm_after_if_else@6
 
-sum_logs_else_body@5:
+k_permutation_logarithm_else_body@5:
     frame_dig 1
-    frame_dig 3
+    frame_dig 4
     *
     frame_bury 1
 
-sum_logs_after_if_else@6:
-    frame_dig 3
+k_permutation_logarithm_after_if_else@6:
+    frame_dig 4
     int 1
     +
-    frame_bury 3
-    b sum_logs_for_header@1
+    frame_bury 4
+    b k_permutation_logarithm_for_header@1
 
-sum_logs_after_for@8:
+k_permutation_logarithm_after_for@8:
     frame_dig 1
     frame_dig -1
     callsub binary_logarithm

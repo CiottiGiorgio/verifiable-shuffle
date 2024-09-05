@@ -92,6 +92,7 @@ def user_account(algorand_client: AlgorandClient) -> AddressAndSigner:
 @pytest.mark.parametrize(
     "test_scenario",
     [
+        (2, 1, [2]),
         (2, 2, [2, 1]),
         (5, 2, [4, 2]),
         (10, 3, [4, 1, 5]),

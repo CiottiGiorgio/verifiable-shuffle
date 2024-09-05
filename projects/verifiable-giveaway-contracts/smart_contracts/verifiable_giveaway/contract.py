@@ -174,9 +174,8 @@ def binary_logarithm(n: UInt64, m: UInt64) -> UInt64:
     return (integer_component << m) | fractional_component
 
 
-# TODO: We need more unit testing on the numerical stability of this algorithm.
 @subroutine
-def sum_logs(start: UInt64, end: UInt64, m: UInt64) -> UInt64:
+def k_permutation_logarithm(n: UInt64, k: UInt64, m: UInt64) -> UInt64:
     """Finds a numerically stable way to compute the binary logarithm of the #k-permutations.
 
     Recall that:
@@ -192,27 +191,27 @@ def sum_logs(start: UInt64, end: UInt64, m: UInt64) -> UInt64:
     Also, this allows us to reduce the number of calls to binary_logarithm.
 
     Args:
-        start: The first integer in the product (included)
-        end: The last integer outside the product (not included)
+        n: Size of the set to permute
+        k: Length of the k-permutation
         m: The numer of iterations to compute the fractional part or, equivalently,
             the number of bits to compute of the fractional part
 
     Returns:
         A fixed point number with an implicit scaling factor of 2^m.
     """
-    log_arg = UInt64(1)
-    sum_of_logs = UInt64(0)
+    largest_log_arg = UInt64(1)
+    summation = UInt64(0)
 
-    for i in urange(start, end):
-        overflow, low = op.mulw(log_arg, i)
+    for i in urange(n - k + 1, n + 1):
+        overflow, low = op.mulw(largest_log_arg, i)
         if overflow or op.bitlen(low) == 64:
-            sum_of_logs += binary_logarithm(log_arg, m)
-            log_arg = i
+            summation += binary_logarithm(largest_log_arg, m)
+            largest_log_arg = i
         else:
-            log_arg *= i
-    sum_of_logs += binary_logarithm(log_arg, m)
+            largest_log_arg *= i
+    summation += binary_logarithm(largest_log_arg, m)
 
-    return sum_of_logs
+    return summation
 
 
 class VerifiableGiveaway(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
@@ -253,14 +252,11 @@ class VerifiableGiveaway(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
             OpUpFeeSource.GroupCredit,
         )
 
-        sum_of_logs = sum_logs(
-            participants.native - winners.native + 1,
-            participants.native + 1,
-            TemplateVar[UInt64](cfg.LOG_PRECISION),
-        )
-        assert sum_of_logs <= (
-            128 << TemplateVar[UInt64](cfg.LOG_PRECISION)
-        ), err.SAFE_SIZE
+        assert k_permutation_logarithm(
+            participants.native,
+            winners.native,
+            UInt64(cfg.LOG_PRECISION),
+        ) <= (128 << UInt64(cfg.LOG_PRECISION)), err.SAFE_SIZE
 
         self.commitment[Txn.sender] = Commitment(
             tx_id=arc4.StaticArray[arc4.Byte, Literal[32]].from_bytes(Txn.tx_id),
