@@ -161,7 +161,7 @@ def test_sequence(
 @pytest.mark.parametrize(
     "test_scenario",
     [
-        (2**32 - 1, 4),
+        (2**32 - 2, 4),
         (2**16 - 1, 8),
         (2**8 - 1, 16),
         (80, 20),
