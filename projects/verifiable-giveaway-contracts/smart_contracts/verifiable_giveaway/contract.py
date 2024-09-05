@@ -100,7 +100,6 @@ class Reveal(arc4.Struct, kw_only=True):
     winners: arc4.DynamicArray[arc4.UInt32]
 
 
-# TODO: We need more unit testing on the numerical stability of this algorithm.
 # TODO: We need more error analysis given the bits used for n and the bits of the fractional
 #  part we wish to compute.
 # It was already attempted to re-write this function in terms of BigUInt math to allow for
