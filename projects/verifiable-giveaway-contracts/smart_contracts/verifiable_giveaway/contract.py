@@ -67,13 +67,13 @@ import smart_contracts.verifiable_giveaway.errors as err
 # - log2(2^128 + 1) > 128
 # When n >= 2^128 + 1, there does not exist an admissible k such that #k-permutations is safe to compute
 #  with a 128-bit seed.
-# Therefore, n fits in a 256-bit integer.
 
-# However, this an enormous number of participants and would allow for a single winner at most.
+# However, 2^128 is an enormous number of participants and would allow for a single winner at most.
 # It would also force us to use BigUInt math everywhere and that's expensive.
-# If participants was a 64-bit number, it would allow for 2 winners at most, but we could use native uint64 math.
-# We are going to assume that participants is a 32-bit number because it allows 4 winners in the worst case
-#  and native uint64 math.
+# If participants was a 64-bit number, it would allow for 2 winners at most, we could use native uint64 math,
+#  but it would create issues with binary_logarithm for reasons stated in the function's docstring.
+# We are going to assume that participants is a 32-bit number because it allows 4 winners in the worst case,
+#  native uint64 math and no issues with binary_logarithm.
 # We also require the number of participants to be less than 2^32-1 because we want to shuffle an array
 #  of values from 1 to n+1 (not from 0 to n).
 # If n = 2^32-1, then the last element is 2^32 which is unrepresentable with 32-bit.
