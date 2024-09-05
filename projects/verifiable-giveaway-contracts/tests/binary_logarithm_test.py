@@ -5,10 +5,10 @@ import algopy
 import pytest
 from algopy_testing import AlgopyTestContext, algopy_testing_context
 
+import smart_contracts.verifiable_giveaway.config as cfg
 from smart_contracts.verifiable_giveaway.contract import (
     binary_logarithm,
 )
-from tests.consts import LOG_PRECISION
 
 
 @pytest.fixture()
@@ -20,9 +20,9 @@ def context() -> Iterator[AlgopyTestContext]:
 @pytest.mark.parametrize("n,log_n", [(2**i, i) for i in range(64)])
 def test_perfect_binary_logarithm(n: int, log_n: int) -> None:
     """Makes sure that the AVM approximated log2 of a perfect power of two is always exactly correct."""
-    result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(LOG_PRECISION))
+    result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(cfg.LOG_PRECISION))
 
-    assert result == log_n << LOG_PRECISION
+    assert result == log_n << cfg.LOG_PRECISION
 
 
 @pytest.mark.parametrize(
@@ -40,7 +40,7 @@ def test_perfect_binary_logarithm(n: int, log_n: int) -> None:
 )
 def test_small_binary_logarithm(n: int, relative_error: float) -> None:
     """Makes sure that the AVM approximated log2 of a small integer (<= 1_000) is within a known good relative error."""
-    result = binary_logarithm(algopy.UInt64(n), LOG_PRECISION)
+    result = binary_logarithm(algopy.UInt64(n), cfg.LOG_PRECISION)
 
     expected_log = int(math.log2(n) * 2**16)
     assert abs(expected_log - result.value) / expected_log <= relative_error
@@ -57,7 +57,7 @@ def test_small_binary_logarithm(n: int, relative_error: float) -> None:
 )
 def test_large_binary_logarithm(n: int) -> None:
     """Makes sure that the AVM approximated log2 of a large integer (> 1_000) is within a known good relative error."""
-    result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(LOG_PRECISION))
+    result = binary_logarithm(algopy.UInt64(n), algopy.UInt64(cfg.LOG_PRECISION))
 
-    expected_log = int(math.log2(n) * 2**LOG_PRECISION)
+    expected_log = int(math.log2(n) * 2**cfg.LOG_PRECISION)
     assert abs(expected_log - result.value) / expected_log <= 0.000005
