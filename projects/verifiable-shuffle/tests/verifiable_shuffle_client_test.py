@@ -52,7 +52,7 @@ def mock_randomness_beacon_deployment(
 
 
 @pytest.fixture(scope="session")
-def verifiable_giveaway_client(
+def verifiable_shuffle_client(
     algod_client: AlgodClient,
     indexer_client: IndexerClient,
     mock_randomness_beacon_deployment: DeployResponse,
@@ -116,7 +116,7 @@ def user_account(algorand_client: AlgorandClient) -> AddressAndSigner:
 )
 def test_sequence(
     algorand_client: AlgorandClient,
-    verifiable_giveaway_client: VerifiableShuffleClient,
+    verifiable_shuffle_client: VerifiableShuffleClient,
     mock_randomness_beacon_deployment: DeployResponse,
     user_account: AddressAndSigner,
     test_scenario: Tuple[int, int, List[int]],
@@ -127,7 +127,7 @@ def test_sequence(
     sp.flat_fee = True
     sp.fee = 100_000
 
-    commit_result = verifiable_giveaway_client.opt_in_commit(
+    commit_result = verifiable_shuffle_client.opt_in_commit(
         delay=1,
         participants=participants,
         winners=winners,
@@ -142,7 +142,7 @@ def test_sequence(
     sp.flat_fee = True
     sp.fee = 100_000
 
-    reveal_result = verifiable_giveaway_client.close_out_reveal(
+    reveal_result = verifiable_shuffle_client.close_out_reveal(
         transaction_parameters=TransactionParameters(
             signer=user_account.signer,
             sender=user_account.address,
@@ -172,7 +172,7 @@ def test_sequence(
 )
 def test_safety_bounds(
     algorand_client: AlgorandClient,
-    verifiable_giveaway_client: VerifiableShuffleClient,
+    verifiable_shuffle_client: VerifiableShuffleClient,
     user_account: AddressAndSigner,
     test_scenario: Tuple[int, int],
 ) -> None:
@@ -183,7 +183,7 @@ def test_safety_bounds(
     sp.fee = 100_000
 
     with pytest.raises(LogicError, match=err.SAFE_SIZE):
-        verifiable_giveaway_client.opt_in_commit(
+        verifiable_shuffle_client.opt_in_commit(
             delay=1,
             participants=participants,
             winners=winners + 1,
@@ -194,7 +194,7 @@ def test_safety_bounds(
             ),
         )
 
-    verifiable_giveaway_client.opt_in_commit(
+    verifiable_shuffle_client.opt_in_commit(
         delay=1,
         participants=participants,
         winners=winners,
@@ -203,7 +203,7 @@ def test_safety_bounds(
         ),
     )
 
-    verifiable_giveaway_client.clear_state(
+    verifiable_shuffle_client.clear_state(
         transaction_parameters=TransactionParameters(
             signer=user_account.signer, sender=user_account.address
         )
@@ -220,7 +220,7 @@ def test_safety_bounds(
 )
 def test_special_case(
     algorand_client: AlgorandClient,
-    verifiable_giveaway_client: VerifiableShuffleClient,
+    verifiable_shuffle_client: VerifiableShuffleClient,
     user_account: AddressAndSigner,
     test_scenario: Tuple[int, int],
 ) -> None:
@@ -230,7 +230,7 @@ def test_special_case(
     sp.flat_fee = True
     sp.fee = 100_000
 
-    verifiable_giveaway_client.opt_in_commit(
+    verifiable_shuffle_client.opt_in_commit(
         delay=1,
         participants=participants,
         winners=winners,
@@ -239,7 +239,7 @@ def test_special_case(
         ),
     )
 
-    verifiable_giveaway_client.clear_state(
+    verifiable_shuffle_client.clear_state(
         transaction_parameters=TransactionParameters(
             signer=user_account.signer, sender=user_account.address
         )
