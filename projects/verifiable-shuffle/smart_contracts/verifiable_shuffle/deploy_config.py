@@ -1,9 +1,11 @@
+import base64
 import logging
 import os
 
 import algokit_utils
-from algokit_utils import is_localnet
+from algokit_utils import TransactionParameters, is_localnet
 from algokit_utils.deploy import get_creator_apps
+from algosdk.constants import min_txn_fee
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 from tenacity import retry, stop_after_attempt, wait_fixed
@@ -23,6 +25,7 @@ def deploy(
         APP_SPEC as MOCK_RB_APP_SPEC,
     )
     from smart_contracts.artifacts.verifiable_shuffle.verifiable_shuffle_client import (
+        Reveal,
         VerifiableShuffleClient,
     )
 
@@ -64,4 +67,36 @@ def deploy(
             "COMMIT_OPUP_SCALING_COST_CONSTANT": 700,
             "REVEAL_OPUP_SCALING_COST_CONSTANT": 600,
         },
+    )
+    sp = algod_client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 2 * min_txn_fee
+    commitment = app_client.opt_in_commit(
+        delay=int(safety_gap),
+        participants=2,
+        winners=1,
+        transaction_parameters=TransactionParameters(suggested_params=sp),
+    )
+    logger.info(
+        f"Called opt_in_commit in {commitment.tx_id} on {app_spec.contract.name} ({app_client.app_id}) "
+        f"with participants = 2, winners = 1, received: {commitment.return_value} "
+    )
+
+    sp = algod_client.suggested_params()
+    sp.flat_fee = True
+    sp.fee = 2 * min_txn_fee
+
+    @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
+    def reveal_with_retry() -> algokit_utils.ABITransactionResponse[Reveal]:
+        return app_client.close_out_reveal(
+            transaction_parameters=TransactionParameters(
+                suggested_params=sp, foreign_apps=[randomness_beacon]
+            )
+        )
+
+    reveal = reveal_with_retry()
+    logger.info(
+        f"Called close_out_reveal on {app_spec.contract.name} ({app_client.app_id}) "
+        f"received: Commitment ID: {base64.b32encode(bytes(reveal.return_value.commitment_tx_id))!r} "
+        f"and winners: {reveal.return_value.winners}"
     )
