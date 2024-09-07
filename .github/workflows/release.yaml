@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.vscode/**'
+      - '.idea/**'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  verifiable-shuffle-contracts-validate:
+    name: Run verifiable-shuffle-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/verifiable-shuffle-contracts-ci.yaml
+
+  verifiable-shuffle-contracts-release:
+    name: Run verifiable-shuffle-contracts release
+    secrets: inherit
+    uses: ./.github/workflows/verifiable-shuffle-contracts-cd.yaml
+    needs: verifiable-shuffle-contracts-validate
