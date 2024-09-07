@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "verifiable-shuffle"
-version = "0.2.0"
+version = "0.1.0"
 description = "Algorand smart contracts"
 authors = ["Giorgio Ciotti <gciotti.dev@gmail.com>"]
 readme = "README.md"
