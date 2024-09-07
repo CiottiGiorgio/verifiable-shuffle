@@ -17,7 +17,8 @@ from algokit_utils.config import config
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
-import smart_contracts.verifiable_shuffle.config as cfg
+import smart_contracts.mock_randomness_beacon.config as cfg_rb
+import smart_contracts.verifiable_shuffle.config as cfg_vs
 import smart_contracts.verifiable_shuffle.errors as err
 from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
     MockRandomnessBeaconClient,
@@ -46,7 +47,7 @@ def mock_randomness_beacon_deployment(
         on_schema_break=algokit_utils.OnSchemaBreak.Fail,
         on_update=algokit_utils.OnUpdate.AppendApp,
         template_values={
-            "VRF_OUTPUT": hashlib.sha3_256(b"NOT-SO-RANDOM-DATA").digest()
+            cfg_rb.OUTPUT: hashlib.sha3_256(b"NOT-SO-RANDOM-DATA").digest()
         },
     )
 
@@ -62,8 +63,8 @@ def verifiable_shuffle_client(
         creator=get_localnet_default_account(algod_client),
         indexer_client=indexer_client,
         template_values={
-            cfg.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
-            cfg.SAFETY_GAP: 1,
+            cfg_vs.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
+            cfg_vs.SAFETY_GAP: 1,
             "COMMIT_OPUP_SCALING_COST_CONSTANT": 700,
             "REVEAL_OPUP_SCALING_COST_CONSTANT": 600,
         },

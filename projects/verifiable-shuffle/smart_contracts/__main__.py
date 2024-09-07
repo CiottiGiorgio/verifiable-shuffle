@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from smart_contracts._helpers.build import build
-from smart_contracts._helpers.config import contracts
+from smart_contracts._helpers.config import SmartContract, contracts
 from smart_contracts._helpers.deploy import deploy
 
 # Uncomment the following lines to enable auto generation of AVM Debugger compliant sourcemap and simulation trace file.
@@ -31,6 +31,17 @@ def main(action: str, contract_name: str | None = None) -> None:
     filtered_contracts = [
         c for c in contracts if contract_name is None or c.name == contract_name
     ]
+
+    def contract_priority(sc: SmartContract) -> int:
+        match sc.name:
+            case "mock_randomness_beacon":
+                return 1
+            case "verifiable_shuffle":
+                return 2
+            case _:
+                return 3
+
+    filtered_contracts.sort(key=contract_priority)
 
     match action:
         case "build":

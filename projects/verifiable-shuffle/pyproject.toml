@@ -13,6 +13,7 @@ python-dotenv = "^1.0.0"
 algorand-python = "^2.0.0"
 algorand-python-testing = "^0.4.0"
 lib-pcg-algopy = "^0.3.2"
+tenacity = "^9.0.0"
 
 [tool.poetry.group.dev.dependencies]
 algokit-client-generator = "^1.1.3"
