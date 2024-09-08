@@ -28,6 +28,9 @@ def deploy(
         Reveal,
         VerifiableShuffleClient,
     )
+    from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_client import (
+        APP_SPEC as OPUP_SPEC,
+    )
 
     app_client = VerifiableShuffleClient(
         algod_client,
@@ -35,25 +38,21 @@ def deploy(
         indexer_client=indexer_client,
     )
 
+    @retry(stop=stop_after_attempt(10), wait=wait_fixed(2))  # type: ignore[misc]
+    def get_creator_app_with_retry(contract_name: str) -> int:
+        return get_creator_apps(indexer_client, deployer).apps[contract_name].app_id
+
     if is_localnet(algod_client):
-
-        @retry(stop=stop_after_attempt(10), wait=wait_fixed(2))  # type: ignore[misc]
-        def get_mock_randomness_beacon_app_id() -> int:
-            return (
-                get_creator_apps(indexer_client, deployer)
-                .apps[MOCK_RB_APP_SPEC.contract.name]
-                .app_id
-            )
-
-        randomness_beacon = get_mock_randomness_beacon_app_id()
+        randomness_beacon = get_creator_app_with_retry(MOCK_RB_APP_SPEC.contract.name)
     else:
-        env_randomness_beacon = os.environ.get(cfg.RANDOMNESS_BEACON)
-        if env_randomness_beacon is None:
+        randomness_beacon_from_env = os.environ.get(cfg.RANDOMNESS_BEACON)
+        if randomness_beacon_from_env is None:
             raise Exception(
                 f"{cfg.RANDOMNESS_BEACON} environment variable not set or not found in localnet"
             )
-        randomness_beacon = int(env_randomness_beacon)
+        randomness_beacon = int(randomness_beacon_from_env)
 
+    verifiable_shuffle_opup = get_creator_app_with_retry(OPUP_SPEC.contract.name)
     safety_gap = os.environ.get(cfg.SAFETY_GAP)
     if safety_gap is None:
         raise Exception(f"{cfg.SAFETY_GAP} environment variable not set")
@@ -63,19 +62,22 @@ def deploy(
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         template_values={
             cfg.RANDOMNESS_BEACON: randomness_beacon,
+            cfg.OPUP: verifiable_shuffle_opup,
             cfg.SAFETY_GAP: int(safety_gap),
-            "COMMIT_OPUP_SCALING_COST_CONSTANT": 700,
-            "REVEAL_OPUP_SCALING_COST_CONSTANT": 600,
+            cfg.COMMIT_SINGLE_WINNER_OP_COST: 600,
+            cfg.REVEAL_SINGLE_WINNER_OP_COST: 500,
         },
     )
     sp = algod_client.suggested_params()
     sp.flat_fee = True
-    sp.fee = 2 * min_txn_fee
+    sp.fee = ((600 // 700) + 2) * min_txn_fee
     commitment = app_client.opt_in_commit(
         delay=int(safety_gap),
         participants=2,
         winners=1,
-        transaction_parameters=TransactionParameters(suggested_params=sp),
+        transaction_parameters=TransactionParameters(
+            suggested_params=sp, foreign_apps=[verifiable_shuffle_opup]
+        ),
     )
     logger.info(
         f"Called opt_in_commit in {commitment.tx_id} on {app_spec.contract.name} ({app_client.app_id}) "
@@ -84,13 +86,14 @@ def deploy(
 
     sp = algod_client.suggested_params()
     sp.flat_fee = True
-    sp.fee = 2 * min_txn_fee
+    sp.fee = ((500 // 700) + 3) * min_txn_fee
 
     @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
     def reveal_with_retry() -> algokit_utils.ABITransactionResponse[Reveal]:
         return app_client.close_out_reveal(
             transaction_parameters=TransactionParameters(
-                suggested_params=sp, foreign_apps=[randomness_beacon]
+                suggested_params=sp,
+                foreign_apps=[randomness_beacon, verifiable_shuffle_opup],
             )
         )
 

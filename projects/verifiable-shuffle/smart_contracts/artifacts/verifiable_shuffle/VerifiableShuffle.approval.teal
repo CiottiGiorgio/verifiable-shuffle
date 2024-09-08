@@ -121,6 +121,8 @@ get_templated_safety_round_gap:
 // smart_contracts.verifiable_shuffle.contract.VerifiableShuffle.commit(delay: bytes, participants: bytes, winners: bytes) -> void:
 commit:
     proto 3 0
+    byte ""
+    dupn 2
     frame_dig -3
     btoi
     dup
@@ -133,7 +135,7 @@ commit:
     int 1
     >=
     bz commit_bool_false@3
-    frame_dig 1
+    frame_dig 4
     int 35
     <
     bz commit_bool_false@3
@@ -148,19 +150,48 @@ commit_bool_merge@4:
     frame_dig -2
     btoi
     dup
+    frame_bury 2
+    dup
     int 2
     >=
     assert // There must be at least two participants
-    frame_dig 1
+    frame_dig 4
     dup
-    dig 2
+    uncover 2
     <=
     assert // Winners must be less than or equal to Participants
-    dup
-    int TMPL_COMMIT_OPUP_SCALING_COST_CONSTANT
+    int TMPL_COMMIT_SINGLE_WINNER_OP_COST
     *
+    int 700
+    /
+    int 1
+    +
+    frame_bury 1
     int 0
-    callsub ensure_budget
+    frame_bury 0
+
+commit_for_header@5:
+    frame_dig 0
+    frame_dig 1
+    <
+    bz commit_after_for@9
+    itxn_begin
+    int TMPL_VERIFIABLE_SHUFFLE_OPUP
+    itxn_field ApplicationID
+    int appl
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    itxn_submit
+    frame_dig 0
+    int 1
+    +
+    frame_bury 0
+    b commit_for_header@5
+
+commit_after_for@9:
+    frame_dig 2
+    frame_dig 4
     int 16
     callsub k_permutation_logarithm
     int 8388608
@@ -168,7 +199,7 @@ commit_bool_merge@4:
     assert // The number of k-permutation exceeds the safety parameters
     txn TxID
     global Round
-    frame_dig 0
+    frame_dig 3
     +
     itob
     concat
@@ -180,48 +211,6 @@ commit_bool_merge@4:
     byte "commitment"
     uncover 2
     app_local_put
-    retsub
-
-
-// algopy.ensure_budget(required_budget: uint64, fee_source: uint64) -> void:
-ensure_budget:
-    proto 2 0
-    frame_dig -2
-    int 10
-    +
-
-ensure_budget_while_top@1:
-    frame_dig 0
-    global OpcodeBudget
-    >
-    bz ensure_budget_after_while@7
-    itxn_begin
-    int appl
-    itxn_field TypeEnum
-    int DeleteApplication
-    itxn_field OnCompletion
-    byte 0x068101
-    itxn_field ApprovalProgram
-    byte 0x068101
-    itxn_field ClearStateProgram
-    frame_dig -1
-    switch ensure_budget_switch_case_0@3 ensure_budget_switch_case_1@4
-    b ensure_budget_switch_case_next@6
-
-ensure_budget_switch_case_0@3:
-    int 0
-    itxn_field Fee
-    b ensure_budget_switch_case_next@6
-
-ensure_budget_switch_case_1@4:
-    global MinTxnFee
-    itxn_field Fee
-
-ensure_budget_switch_case_next@6:
-    itxn_submit
-    b ensure_budget_while_top@1
-
-ensure_budget_after_while@7:
     retsub
 
 
@@ -383,7 +372,7 @@ reveal:
     int 0
     dup
     byte ""
-    dupn 8
+    dupn 10
     txn Sender
     int 0
     byte "commitment"
@@ -442,81 +431,107 @@ reveal:
     int 0
 
 reveal_for_header@2:
-    frame_dig 15
+    frame_dig 17
     int 11
     <
     bz reveal_after_for@5
-    frame_dig 15
+    frame_dig 17
     dup
     byte 0x
     stores
     int 1
     +
-    frame_bury 15
+    frame_bury 17
     b reveal_for_header@2
 
 reveal_after_for@5:
-    frame_dig 12
-    dup
-    int TMPL_REVEAL_OPUP_SCALING_COST_CONSTANT
+    frame_dig 14
+    int TMPL_REVEAL_SINGLE_WINNER_OP_COST
     *
+    int 700
+    /
+    int 1
+    +
+    frame_bury 4
     int 0
-    callsub ensure_budget
-    frame_dig 11
-    <
-    bz reveal_ternary_false@7
-    frame_dig 12
-    frame_bury 5
-    b reveal_ternary_merge@8
+    frame_bury 2
 
-reveal_ternary_false@7:
-    frame_dig 12
+reveal_for_header@6:
+    frame_dig 2
+    frame_dig 4
+    <
+    bz reveal_after_for@10
+    itxn_begin
+    int TMPL_VERIFIABLE_SHUFFLE_OPUP
+    itxn_field ApplicationID
+    int appl
+    itxn_field TypeEnum
+    int 0
+    itxn_field Fee
+    itxn_submit
+    frame_dig 2
+    int 1
+    +
+    frame_bury 2
+    b reveal_for_header@6
+
+reveal_after_for@10:
+    frame_dig 14
+    frame_dig 13
+    <
+    bz reveal_ternary_false@12
+    frame_dig 14
+    frame_bury 7
+    b reveal_ternary_merge@13
+
+reveal_ternary_false@12:
+    frame_dig 14
     int 1
     -
-    frame_bury 5
+    frame_bury 7
 
-reveal_ternary_merge@8:
-    frame_dig 14
+reveal_ternary_merge@13:
+    frame_dig 16
     extract 2 0
     callsub pcg128_init
+    frame_bury 11
+    frame_bury 10
     frame_bury 9
     frame_bury 8
-    frame_bury 7
-    frame_bury 6
     byte 0x0000
     frame_bury 0
     int 0
-    frame_bury 15
+    frame_bury 17
 
-reveal_for_header@9:
-    frame_dig 15
-    frame_dig 5
+reveal_for_header@14:
+    frame_dig 17
+    frame_dig 7
     <
-    bz reveal_after_for@15
-    frame_dig 15
+    bz reveal_after_for@20
+    frame_dig 17
     dup
     itob
-    frame_dig 11
+    frame_dig 13
     itob
-    frame_dig 6
-    frame_dig 7
     frame_dig 8
     frame_dig 9
+    frame_dig 10
+    frame_dig 11
     uncover 5
     uncover 5
     int 1
     callsub pcg128_random
     cover 4
+    frame_bury 11
+    frame_bury 10
     frame_bury 9
     frame_bury 8
-    frame_bury 7
-    frame_bury 6
     extract 2 0
     extract 0 16 // on error: Index access is out of bounds
     int 12
     extract_uint32
     dup
-    frame_bury 3
+    frame_bury 5
     dig 1
     int 11
     %
@@ -528,19 +543,19 @@ reveal_for_header@9:
     uncover 3
     cover 2
     select
-    frame_bury 2
+    frame_bury 3
     dup
     int 11
     %
     dup
-    frame_bury 10
+    frame_bury 12
     loads
     dup
     cover 2
     dig 1
     callsub linear_search
     cover 2
-    frame_bury 4
+    frame_bury 6
     cover 2
     dig 2
     select
@@ -559,44 +574,44 @@ reveal_for_header@9:
     swap
     concat
     frame_bury 0
-    bz reveal_else_body@12
-    frame_dig 4
+    bz reveal_else_body@17
+    frame_dig 6
     int 4
     +
-    frame_dig 2
-    itob
-    extract 4 4
-    replace3
-    b reveal_after_if_else@13
-
-reveal_else_body@12:
     frame_dig 3
     itob
     extract 4 4
-    frame_dig 2
+    replace3
+    b reveal_after_if_else@18
+
+reveal_else_body@17:
+    frame_dig 5
+    itob
+    extract 4 4
+    frame_dig 3
     itob
     extract 4 4
     concat
     concat
 
-reveal_after_if_else@13:
-    frame_dig 10
+reveal_after_if_else@18:
+    frame_dig 12
     swap
     stores
-    frame_dig 15
+    frame_dig 17
     int 1
     +
-    frame_bury 15
-    b reveal_for_header@9
+    frame_bury 17
+    b reveal_for_header@14
 
-reveal_after_for@15:
-    frame_dig 11
-    frame_dig 12
+reveal_after_for@20:
+    frame_dig 13
+    frame_dig 14
     ==
     frame_dig 0
     frame_bury 1
-    bz reveal_after_if_else@17
-    frame_dig 12
+    bz reveal_after_if_else@22
+    frame_dig 14
     int 1
     -
     dup
@@ -624,9 +639,9 @@ reveal_after_for@15:
     concat
     frame_bury 1
 
-reveal_after_if_else@17:
+reveal_after_if_else@22:
     frame_dig 1
-    frame_dig 13
+    frame_dig 15
     byte 0x0022
     concat
     swap

@@ -1,8 +1,11 @@
 from typing import Final
 
-# TemplateVar
+# TemplateVar Labels
 RANDOMNESS_BEACON: Final[str] = "RANDOMNESS_BEACON"
+OPUP: Final[str] = "VERIFIABLE_SHUFFLE_OPUP"
 SAFETY_GAP: Final[str] = "SAFETY_ROUND_GAP"
+COMMIT_SINGLE_WINNER_OP_COST: Final[str] = "COMMIT_SINGLE_WINNER_OP_COST"
+REVEAL_SINGLE_WINNER_OP_COST: Final[str] = "REVEAL_SINGLE_WINNER_OP_COST"
 
 # Constants
 LOG_PRECISION: Final[int] = 16

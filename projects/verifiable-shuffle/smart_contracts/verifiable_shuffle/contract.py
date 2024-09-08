@@ -8,12 +8,11 @@ from algopy import (
     Global,
     LocalState,
     OnCompleteAction,
-    OpUpFeeSource,
     TemplateVar,
     Txn,
     UInt64,
     arc4,
-    ensure_budget,
+    itxn,
     op,
     subroutine,
     urange,
@@ -244,10 +243,11 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
         assert 2 <= participants.native, err.PARTICIPANTS_BOUND
         assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
-        ensure_budget(
-            winners.native * TemplateVar[UInt64]("COMMIT_OPUP_SCALING_COST_CONSTANT"),
-            OpUpFeeSource.GroupCredit,
-        )
+        inner_opup_calls = (
+            winners.native * TemplateVar[UInt64](cfg.COMMIT_SINGLE_WINNER_OP_COST)
+        ) // 700 + 1
+        for _i in urange(inner_opup_calls):
+            itxn.ApplicationCall(app_id=TemplateVar[Application](cfg.OPUP)).submit()
 
         assert k_permutation_logarithm(
             participants.native,
@@ -284,11 +284,11 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
 
         # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
         #  and the contract should protect the user/funding account.
-        ensure_budget(
-            committed_winners
-            * TemplateVar[UInt64]("REVEAL_OPUP_SCALING_COST_CONSTANT"),
-            OpUpFeeSource.GroupCredit,
-        )
+        inner_opup_calls = (
+            committed_winners * TemplateVar[UInt64](cfg.REVEAL_SINGLE_WINNER_OP_COST)
+        ) // 700 + 1
+        for _i in urange(inner_opup_calls):
+            itxn.ApplicationCall(app_id=TemplateVar[Application](cfg.OPUP)).submit()
 
         # Knuth shuffle.
         # We don't create a pre-initialized array of elements from 0 to n-1 because

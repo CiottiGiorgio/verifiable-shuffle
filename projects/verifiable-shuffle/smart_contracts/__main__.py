@@ -34,6 +34,8 @@ def main(action: str, contract_name: str | None = None) -> None:
 
     def contract_priority(sc: SmartContract) -> int:
         match sc.name:
+            case "verifiable_shuffle_opup":
+                return 0
             case "mock_randomness_beacon":
                 return 1
             case "verifiable_shuffle":

@@ -1,0 +1,11 @@
+#pragma version 10
+
+smart_contracts.verifiable_shuffle_opup.contract.VerifiableShuffleOpup.approval_program:
+    txn NumAppArgs
+    !
+    assert // reject transaction
+    txn OnCompletion
+    !
+    assert // reject transaction
+    int 1
+    return

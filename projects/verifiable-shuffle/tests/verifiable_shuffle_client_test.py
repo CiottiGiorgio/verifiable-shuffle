@@ -14,6 +14,7 @@ from algokit_utils import (
 from algokit_utils.beta.account_manager import AddressAndSigner
 from algokit_utils.beta.algorand_client import AlgorandClient
 from algokit_utils.config import config
+from algosdk.constants import min_txn_fee
 from algosdk.v2client.algod import AlgodClient
 from algosdk.v2client.indexer import IndexerClient
 
@@ -25,6 +26,9 @@ from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_cli
 )
 from smart_contracts.artifacts.verifiable_shuffle.verifiable_shuffle_client import (
     VerifiableShuffleClient,
+)
+from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_client import (
+    VerifiableShuffleOpupClient,
 )
 
 
@@ -53,10 +57,32 @@ def mock_randomness_beacon_deployment(
 
 
 @pytest.fixture(scope="session")
+def opup_deployment(
+    algod_client: AlgodClient, indexer_client: IndexerClient
+) -> DeployResponse:
+    config.configure(
+        debug=False,
+        # trace_all=True,
+    )
+
+    client = VerifiableShuffleOpupClient(
+        algod_client,
+        creator=get_localnet_default_account(algod_client),
+        indexer_client=indexer_client,
+    )
+
+    return client.deploy(
+        on_schema_break=algokit_utils.OnSchemaBreak.Fail,
+        on_update=algokit_utils.OnUpdate.AppendApp,
+    )
+
+
+@pytest.fixture(scope="session")
 def verifiable_shuffle_client(
     algod_client: AlgodClient,
     indexer_client: IndexerClient,
     mock_randomness_beacon_deployment: DeployResponse,
+    opup_deployment: DeployResponse,
 ) -> VerifiableShuffleClient:
     client = VerifiableShuffleClient(
         algod_client,
@@ -64,9 +90,10 @@ def verifiable_shuffle_client(
         indexer_client=indexer_client,
         template_values={
             cfg_vs.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
+            cfg_vs.OPUP: opup_deployment.app.app_id,
             cfg_vs.SAFETY_GAP: 1,
-            "COMMIT_OPUP_SCALING_COST_CONSTANT": 700,
-            "REVEAL_OPUP_SCALING_COST_CONSTANT": 600,
+            cfg_vs.COMMIT_SINGLE_WINNER_OP_COST: 600,
+            cfg_vs.REVEAL_SINGLE_WINNER_OP_COST: 500,
         },
     )
 
@@ -119,6 +146,7 @@ def test_sequence(
     algorand_client: AlgorandClient,
     verifiable_shuffle_client: VerifiableShuffleClient,
     mock_randomness_beacon_deployment: DeployResponse,
+    opup_deployment: DeployResponse,
     user_account: AddressAndSigner,
     test_scenario: Tuple[int, int, List[int]],
 ) -> None:
@@ -126,14 +154,26 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 100_000
+    sp.fee = (
+        (
+            winners
+            * verifiable_shuffle_client.app_client.template_values[
+                cfg_vs.COMMIT_SINGLE_WINNER_OP_COST
+            ]
+        )
+        // 700
+        + 2
+    ) * min_txn_fee
 
     commit_result = verifiable_shuffle_client.opt_in_commit(
         delay=1,
         participants=participants,
         winners=winners,
         transaction_parameters=TransactionParameters(
-            signer=user_account.signer, sender=user_account.address, suggested_params=sp
+            signer=user_account.signer,
+            sender=user_account.address,
+            suggested_params=sp,
+            foreign_apps=[opup_deployment.app.app_id],
         ),
     )
 
@@ -141,14 +181,26 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 100_000
+    sp.fee = (
+        (
+            winners
+            * verifiable_shuffle_client.app_client.template_values[
+                cfg_vs.REVEAL_SINGLE_WINNER_OP_COST
+            ]
+        )
+        // 700
+        + 3
+    ) * min_txn_fee
 
     reveal_result = verifiable_shuffle_client.close_out_reveal(
         transaction_parameters=TransactionParameters(
             signer=user_account.signer,
             sender=user_account.address,
             suggested_params=sp,
-            foreign_apps=[mock_randomness_beacon_deployment.app.app_id],
+            foreign_apps=[
+                mock_randomness_beacon_deployment.app.app_id,
+                opup_deployment.app.app_id,
+            ],
         )
     )
     reveal_outcome = reveal_result.return_value
@@ -163,7 +215,7 @@ def test_sequence(
 @pytest.mark.parametrize(
     "test_scenario",
     [
-        (2**32 - 2, 4),
+        (2**32 - 1, 4),
         (2**16 - 1, 8),
         (2**8 - 1, 16),
         (80, 20),
@@ -174,6 +226,7 @@ def test_sequence(
 def test_safety_bounds(
     algorand_client: AlgorandClient,
     verifiable_shuffle_client: VerifiableShuffleClient,
+    opup_deployment: DeployResponse,
     user_account: AddressAndSigner,
     test_scenario: Tuple[int, int],
 ) -> None:
@@ -181,7 +234,17 @@ def test_safety_bounds(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 100_000
+    sp.fee = sp.fee = (
+        (
+            winners
+            * verifiable_shuffle_client.app_client.template_values[
+                cfg_vs.COMMIT_SINGLE_WINNER_OP_COST
+            ]
+        )
+        // 700
+        + 2
+        + 1
+    ) * min_txn_fee
 
     with pytest.raises(LogicError, match=err.SAFE_SIZE):
         verifiable_shuffle_client.opt_in_commit(
@@ -192,6 +255,7 @@ def test_safety_bounds(
                 signer=user_account.signer,
                 sender=user_account.address,
                 suggested_params=sp,
+                foreign_apps=[opup_deployment.app.app_id],
             ),
         )
 
@@ -200,7 +264,10 @@ def test_safety_bounds(
         participants=participants,
         winners=winners,
         transaction_parameters=TransactionParameters(
-            signer=user_account.signer, sender=user_account.address, suggested_params=sp
+            signer=user_account.signer,
+            sender=user_account.address,
+            suggested_params=sp,
+            foreign_apps=[opup_deployment.app.app_id],
         ),
     )
 
@@ -222,6 +289,7 @@ def test_safety_bounds(
 def test_special_case(
     algorand_client: AlgorandClient,
     verifiable_shuffle_client: VerifiableShuffleClient,
+    opup_deployment: DeployResponse,
     user_account: AddressAndSigner,
     test_scenario: Tuple[int, int],
 ) -> None:
@@ -229,14 +297,26 @@ def test_special_case(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = 100_000
+    sp.fee = sp.fee = (
+        (
+            winners
+            * verifiable_shuffle_client.app_client.template_values[
+                cfg_vs.COMMIT_SINGLE_WINNER_OP_COST
+            ]
+        )
+        // 700
+        + 2
+    ) * min_txn_fee
 
     verifiable_shuffle_client.opt_in_commit(
         delay=1,
         participants=participants,
         winners=winners,
         transaction_parameters=TransactionParameters(
-            signer=user_account.signer, sender=user_account.address, suggested_params=sp
+            signer=user_account.signer,
+            sender=user_account.address,
+            suggested_params=sp,
+            foreign_apps=[opup_deployment.app.app_id],
         ),
     )
 

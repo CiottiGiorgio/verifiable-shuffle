@@ -1,0 +1,5 @@
+#pragma version 10
+
+smart_contracts.verifiable_shuffle_opup.contract.VerifiableShuffleOpup.clear_state_program:
+    int 1
+    return

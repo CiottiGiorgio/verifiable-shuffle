@@ -1,0 +1,35 @@
+{
+    "hints": {},
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDEwCgpzbWFydF9jb250cmFjdHMudmVyaWZpYWJsZV9zaHVmZmxlX29wdXAuY29udHJhY3QuVmVyaWZpYWJsZVNodWZmbGVPcHVwLmFwcHJvdmFsX3Byb2dyYW06CiAgICB0eG4gTnVtQXBwQXJncwogICAgIQogICAgYXNzZXJ0IC8vIHJlamVjdCB0cmFuc2FjdGlvbgogICAgdHhuIE9uQ29tcGxldGlvbgogICAgIQogICAgYXNzZXJ0IC8vIHJlamVjdCB0cmFuc2FjdGlvbgogICAgaW50IDEKICAgIHJldHVybgo=",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDEwCgpzbWFydF9jb250cmFjdHMudmVyaWZpYWJsZV9zaHVmZmxlX29wdXAuY29udHJhY3QuVmVyaWZpYWJsZVNodWZmbGVPcHVwLmNsZWFyX3N0YXRlX3Byb2dyYW06CiAgICBpbnQgMQogICAgcmV0dXJuCg=="
+    },
+    "state": {
+        "global": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        },
+        "local": {
+            "num_byte_slices": 0,
+            "num_uints": 0
+        }
+    },
+    "schema": {
+        "global": {
+            "declared": {},
+            "reserved": {}
+        },
+        "local": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "VerifiableShuffleOpup",
+        "methods": [],
+        "networks": {}
+    },
+    "bare_call_config": {
+        "no_op": "ALL"
+    }
+}

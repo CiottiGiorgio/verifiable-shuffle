@@ -1,4 +1,4 @@
 from typing import Final
 
-# TemplateVar
+# TemplateVar Labels
 OUTPUT: Final[str] = "RANDOMNESS_OUTPUT"
