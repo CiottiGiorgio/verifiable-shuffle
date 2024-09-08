@@ -282,8 +282,6 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
         for i in urange(cfg.BINS):
             op.Scratch.store(i, Bytes())
 
-        # FIXME: We should check how much fee was provided for this call. If it's too much it's a draining attack
-        #  and the contract should protect the user/funding account.
         inner_opup_calls = (
             committed_winners * TemplateVar[UInt64](cfg.REVEAL_SINGLE_WINNER_OP_COST)
         ) // 700 + 1
