@@ -92,8 +92,6 @@ def verifiable_shuffle_client(
             cfg_vs.RANDOMNESS_BEACON: mock_randomness_beacon_deployment.app.app_id,
             cfg_vs.OPUP: opup_deployment.app.app_id,
             cfg_vs.SAFETY_GAP: 1,
-            cfg_vs.COMMIT_SINGLE_WINNER_OP_COST: 600,
-            cfg_vs.REVEAL_SINGLE_WINNER_OP_COST: 500,
         },
     )
 
@@ -154,16 +152,7 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = (
-        (
-            winners
-            * verifiable_shuffle_client.app_client.template_values[
-                cfg_vs.COMMIT_SINGLE_WINNER_OP_COST
-            ]
-        )
-        // 700
-        + 2
-    ) * min_txn_fee
+    sp.fee = ((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2) * min_txn_fee
 
     commit_result = verifiable_shuffle_client.opt_in_commit(
         delay=1,
@@ -181,16 +170,7 @@ def test_sequence(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = (
-        (
-            winners
-            * verifiable_shuffle_client.app_client.template_values[
-                cfg_vs.REVEAL_SINGLE_WINNER_OP_COST
-            ]
-        )
-        // 700
-        + 3
-    ) * min_txn_fee
+    sp.fee = ((winners * cfg_vs.REVEAL_SINGLE_WINNER_OP_COST) // 700 + 3) * min_txn_fee
 
     reveal_result = verifiable_shuffle_client.close_out_reveal(
         transaction_parameters=TransactionParameters(
@@ -234,16 +214,8 @@ def test_safety_bounds(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = sp.fee = (
-        (
-            winners
-            * verifiable_shuffle_client.app_client.template_values[
-                cfg_vs.COMMIT_SINGLE_WINNER_OP_COST
-            ]
-        )
-        // 700
-        + 2
-        + 1
+    sp.fee = (
+        (winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2 + 1
     ) * min_txn_fee
 
     with pytest.raises(LogicError, match=err.SAFE_SIZE):
@@ -297,16 +269,7 @@ def test_special_case(
 
     sp = algorand_client.client.algod.suggested_params()
     sp.flat_fee = True
-    sp.fee = sp.fee = (
-        (
-            winners
-            * verifiable_shuffle_client.app_client.template_values[
-                cfg_vs.COMMIT_SINGLE_WINNER_OP_COST
-            ]
-        )
-        // 700
-        + 2
-    ) * min_txn_fee
+    sp.fee = ((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2) * min_txn_fee
 
     verifiable_shuffle_client.opt_in_commit(
         delay=1,

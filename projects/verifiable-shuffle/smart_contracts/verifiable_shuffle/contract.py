@@ -244,7 +244,7 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
         assert winners.native <= participants.native, err.INPUT_SOUNDNESS
 
         inner_opup_calls = (
-            winners.native * TemplateVar[UInt64](cfg.COMMIT_SINGLE_WINNER_OP_COST)
+            winners.native * UInt64(cfg.COMMIT_SINGLE_WINNER_OP_COST)
         ) // 700 + 1
         for _i in urange(inner_opup_calls):
             itxn.ApplicationCall(app_id=TemplateVar[Application](cfg.OPUP)).submit()
@@ -283,7 +283,7 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
             op.Scratch.store(i, Bytes())
 
         inner_opup_calls = (
-            committed_winners * TemplateVar[UInt64](cfg.REVEAL_SINGLE_WINNER_OP_COST)
+            committed_winners * UInt64(cfg.REVEAL_SINGLE_WINNER_OP_COST)
         ) // 700 + 1
         for _i in urange(inner_opup_calls):
             itxn.ApplicationCall(app_id=TemplateVar[Application](cfg.OPUP)).submit()

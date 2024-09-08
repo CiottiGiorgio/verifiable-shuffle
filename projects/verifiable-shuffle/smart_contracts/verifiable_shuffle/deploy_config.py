@@ -64,13 +64,11 @@ def deploy(
             cfg.RANDOMNESS_BEACON: randomness_beacon,
             cfg.OPUP: verifiable_shuffle_opup,
             cfg.SAFETY_GAP: int(safety_gap),
-            cfg.COMMIT_SINGLE_WINNER_OP_COST: 600,
-            cfg.REVEAL_SINGLE_WINNER_OP_COST: 500,
         },
     )
     sp = algod_client.suggested_params()
     sp.flat_fee = True
-    sp.fee = ((600 // 700) + 2) * min_txn_fee
+    sp.fee = ((cfg.COMMIT_SINGLE_WINNER_OP_COST // 700) + 2) * min_txn_fee
     commitment = app_client.opt_in_commit(
         delay=int(safety_gap),
         participants=2,
@@ -86,7 +84,7 @@ def deploy(
 
     sp = algod_client.suggested_params()
     sp.flat_fee = True
-    sp.fee = ((500 // 700) + 3) * min_txn_fee
+    sp.fee = ((cfg.REVEAL_SINGLE_WINNER_OP_COST // 700) + 3) * min_txn_fee
 
     @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
     def reveal_with_retry() -> algokit_utils.ABITransactionResponse[Reveal]:

@@ -160,7 +160,7 @@ commit_bool_merge@4:
     uncover 2
     <=
     assert // Winners must be less than or equal to Participants
-    int TMPL_COMMIT_SINGLE_WINNER_OP_COST
+    int 600
     *
     int 700
     /
@@ -446,7 +446,7 @@ reveal_for_header@2:
 
 reveal_after_for@5:
     frame_dig 14
-    int TMPL_REVEAL_SINGLE_WINNER_OP_COST
+    int 500
     *
     int 700
     /
