@@ -17,6 +17,11 @@ This application also implements the commitment scheme outlined in the
 This application is not audited for soundness and safety. It’s also still a work in progress.
 Use at your own risk. See [MIT License](./LICENSE).
 
+## Deployment
+The app is currently available on TestNet on AppID `720180206`.
+If you are not using automatic resource population, make sure to include the auxiliary AppID `720338984`
+in the foreign app array.
+
 ## Features and Usage
 This application implements two methods: `commit` & `reveal`.
 Users of this application need to commit to the selection parameters `(participants, winners, block_delay)`
