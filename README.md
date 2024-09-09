@@ -19,6 +19,7 @@ Use at your own risk. See [MIT License](./LICENSE).
 
 ## Deployment
 The app is currently available on TestNet on AppID `720180206`.
+
 If you are not using automatic resource population, make sure to include the auxiliary AppID `720338984`
 in the foreign app array.
 
