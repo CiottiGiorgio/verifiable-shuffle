@@ -3,7 +3,13 @@ import logging
 import os
 
 import algokit_utils
-from algokit_utils import TransactionParameters, is_localnet
+from algokit_utils import (
+    EnsureBalanceParameters,
+    TransactionParameters,
+    ensure_funded,
+    get_account,
+    is_localnet,
+)
 from algokit_utils.deploy import get_creator_apps
 from algosdk.constants import min_txn_fee
 from algosdk.v2client.algod import AlgodClient
@@ -66,6 +72,17 @@ def deploy(
             cfg.SAFETY_GAP: int(safety_gap),
         },
     )
+
+    user = get_account(algod_client, "USER", fund_with_algos=0)
+    ensure_funded(
+        algod_client,
+        EnsureBalanceParameters(
+            account_to_fund=user,
+            min_spending_balance_micro_algos=1_000_000,
+            min_funding_increment_micro_algos=1_000_000,
+        ),
+    )
+
     sp = algod_client.suggested_params()
     sp.flat_fee = True
     sp.fee = ((cfg.COMMIT_SINGLE_WINNER_OP_COST // 700) + 2) * min_txn_fee
@@ -74,7 +91,10 @@ def deploy(
         participants=2,
         winners=1,
         transaction_parameters=TransactionParameters(
-            suggested_params=sp, foreign_apps=[verifiable_shuffle_opup]
+            signer=user.signer,
+            sender=user.address,
+            suggested_params=sp,
+            foreign_apps=[verifiable_shuffle_opup],
         ),
     )
     logger.info(
@@ -93,6 +113,8 @@ def deploy(
 
         return app_client.close_out_reveal(
             transaction_parameters=TransactionParameters(
+                signer=user.signer,
+                sender=user.address,
                 suggested_params=sp,
                 foreign_apps=[randomness_beacon, verifiable_shuffle_opup],
             )
