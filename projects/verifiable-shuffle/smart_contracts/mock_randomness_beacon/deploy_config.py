@@ -42,4 +42,4 @@ def deploy(
             f"with {round_arg = }, {user_data = !r}, received: {randomness.return_value!r}"
         )
     else:
-        logger.info("Not on LocalNet. Nothing to do.")
+        logger.info("Not on LocalNet, nothing to do.")

@@ -82,12 +82,15 @@ def deploy(
         f"with participants = 2, winners = 1, received: {commitment.return_value} "
     )
 
-    sp = algod_client.suggested_params()
-    sp.flat_fee = True
-    sp.fee = ((cfg.REVEAL_SINGLE_WINNER_OP_COST // 700) + 3) * min_txn_fee
-
+    # Even though delay=1, we still need to retry this transaction a couple of times because
+    #  we could be waiting for the VRF off-the-chain service to upload the VRF result to the
+    #  Randomness Beacon.
     @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
     def reveal_with_retry() -> algokit_utils.ABITransactionResponse[Reveal]:
+        sp = algod_client.suggested_params()
+        sp.flat_fee = True
+        sp.fee = ((cfg.REVEAL_SINGLE_WINNER_OP_COST // 700) + 3) * min_txn_fee
+
         return app_client.close_out_reveal(
             transaction_parameters=TransactionParameters(
                 suggested_params=sp,
@@ -95,7 +98,12 @@ def deploy(
             )
         )
 
-    reveal = reveal_with_retry()
+    try:
+        reveal = reveal_with_retry()
+    except:
+        app_client.clear_state()
+        raise
+
     logger.info(
         f"Called close_out_reveal on {app_spec.contract.name} ({app_client.app_id}) "
         f"received: Commitment ID: {base64.b32encode(bytes(reveal.return_value.commitment_tx_id))!r} "
