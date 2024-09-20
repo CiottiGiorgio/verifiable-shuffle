@@ -933,11 +933,6 @@ export class VerifiableShuffleClient {
           returns: result.methodResults?.map((val, i) => resultMappers[i] !== undefined ? resultMappers[i]!(val.returnValue) : val.returnValue)
         }
       },
-      async sign() {
-        await promiseChain
-        await atc.gatherSignatures()
-        return this
-      },
       async execute(sendParams?: AppClientComposeExecuteParams) {
         await promiseChain
         const result = await algokit.sendAtomicTransactionComposer({ atc, sendParams }, client.algod)
@@ -1046,7 +1041,7 @@ export type VerifiableShuffleComposer<TReturns extends [...any[]] = []> = {
      * @param params Any additional parameters for the call
      * @returns The typed transaction composer so you can fluently chain multiple calls or call execute to execute all queued up transactions
      */
-    reveal(args: MethodArgs<'reveal()(byte[32],uint32[])'>, params?: AppClientComposeCallCoreParams & CoreAppCallArgs): VerifiableShuffleComposer<[...TReturns, MethodReturn<'reveal()(byte[32],uint32[])'>]>
+    reveal(args: MethodArgs<'reveal()(byte[32],uint32[])'>, params?: AppClientComposeCallCoreParams): VerifiableShuffleComposer<[...TReturns, MethodReturn<'reveal()(byte[32],uint32[])'>]>
   }
 
   /**
@@ -1072,8 +1067,6 @@ export type VerifiableShuffleComposer<TReturns extends [...any[]] = []> = {
    * Simulates the transaction group and returns the result
    */
   simulate(options?: SimulateOptions): Promise<VerifiableShuffleComposerSimulateResult<TReturns>>
-
-  sign()
   /**
    * Executes the transaction group and returns the results
    */

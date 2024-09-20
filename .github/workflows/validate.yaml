@@ -8,3 +8,8 @@ jobs:
     if: '! github.event.pull_request.draft'
     name: Run verifiable-shuffle-contracts validation
     uses: ./.github/workflows/verifiable-shuffle-contracts-ci.yaml
+
+  verifiable-shuffle-frontend-ci:
+    if: '! github.event.pull_request.draft'
+    name: Run verifiable-shuffle-frontend validation
+    uses: ./.github/workflows/verifiable-shuffle-frontend-ci.yaml

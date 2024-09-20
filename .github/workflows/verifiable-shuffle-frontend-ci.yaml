@@ -1,9 +1,7 @@
 name: Validate verifiable-shuffle-frontend
 
 on:
-
   workflow_call:
-
 
 jobs:
   validate:
@@ -34,14 +32,11 @@ jobs:
       - name: Install dependencies
         run: algokit project bootstrap all --project-name 'verifiable-shuffle-frontend'
 
-
       - name: Run linters
         run: algokit project run lint --project-name 'verifiable-shuffle-frontend'
 
-
       - name: Run unit tests
         run: algokit project run test --project-name 'verifiable-shuffle-frontend'
-
 
       - name: Build
         run: algokit project run build --project-name 'verifiable-shuffle-frontend'
