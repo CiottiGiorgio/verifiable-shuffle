@@ -6,6 +6,9 @@
     },
     {
       "path": "projects/verifiable-shuffle"
+    },
+    {
+      "path": "projects/verifiable-shuffle-frontend"
     }
   ],
   "settings": {
