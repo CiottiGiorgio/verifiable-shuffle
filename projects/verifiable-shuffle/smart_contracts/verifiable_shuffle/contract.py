@@ -230,6 +230,10 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
         return TemplateVar[Application](cfg.RANDOMNESS_BEACON).id
 
     @arc4.abimethod(readonly=True)
+    def get_templated_opup_id(self) -> UInt64:
+        return TemplateVar[Application](cfg.OPUP).id
+
+    @arc4.abimethod(readonly=True)
     def get_templated_safety_round_gap(self) -> UInt64:
         return TemplateVar[UInt64](cfg.SAFETY_GAP)
 

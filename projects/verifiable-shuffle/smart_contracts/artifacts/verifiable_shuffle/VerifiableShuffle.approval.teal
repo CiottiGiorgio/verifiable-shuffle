@@ -2,13 +2,14 @@
 
 smart_contracts.verifiable_shuffle.contract.VerifiableShuffle.approval_program:
     txn NumAppArgs
-    bz main_bare_routing@8
+    bz main_bare_routing@9
     method "get_templated_randomness_beacon_id()uint64"
+    method "get_templated_opup_id()uint64"
     method "get_templated_safety_round_gap()uint64"
     method "commit(uint8,uint32,uint8)void"
     method "reveal()(byte[32],uint32[])"
     txna ApplicationArgs 0
-    match main_get_templated_randomness_beacon_id_route@2 main_get_templated_safety_round_gap_route@3 main_commit_route@4 main_reveal_route@5
+    match main_get_templated_randomness_beacon_id_route@2 main_get_templated_opup_id_route@3 main_get_templated_safety_round_gap_route@4 main_commit_route@5 main_reveal_route@6
     err // reject transaction
 
 main_get_templated_randomness_beacon_id_route@2:
@@ -26,7 +27,22 @@ main_get_templated_randomness_beacon_id_route@2:
     int 1
     return
 
-main_get_templated_safety_round_gap_route@3:
+main_get_templated_opup_id_route@3:
+    txn OnCompletion
+    !
+    assert // OnCompletion is NoOp
+    txn ApplicationID
+    assert // is not creating
+    callsub get_templated_opup_id
+    itob
+    byte 0x151f7c75
+    swap
+    concat
+    log
+    int 1
+    return
+
+main_get_templated_safety_round_gap_route@4:
     txn OnCompletion
     !
     assert // OnCompletion is NoOp
@@ -41,7 +57,7 @@ main_get_templated_safety_round_gap_route@3:
     int 1
     return
 
-main_commit_route@4:
+main_commit_route@5:
     int 1
     txn OnCompletion
     shl
@@ -57,7 +73,7 @@ main_commit_route@4:
     int 1
     return
 
-main_reveal_route@5:
+main_reveal_route@6:
     int 1
     txn OnCompletion
     shl
@@ -74,33 +90,33 @@ main_reveal_route@5:
     int 1
     return
 
-main_bare_routing@8:
+main_bare_routing@9:
     txn OnCompletion
-    switch main_create@9 main_reject_bare_on_completion@12 main_reject_bare_on_completion@12 main_reject_bare_on_completion@12 main_update@10 main_delete@11
+    switch main_create@10 main_reject_bare_on_completion@13 main_reject_bare_on_completion@13 main_reject_bare_on_completion@13 main_update@11 main_delete@12
     err // reject transaction
 
-main_create@9:
+main_create@10:
     txn ApplicationID
     !
     assert // is creating
     int 1
     return
 
-main_update@10:
+main_update@11:
     txn ApplicationID
     assert // is not creating
     callsub update
     int 1
     return
 
-main_delete@11:
+main_delete@12:
     txn ApplicationID
     assert // is not creating
     callsub delete
     int 1
     return
 
-main_reject_bare_on_completion@12:
+main_reject_bare_on_completion@13:
     err // reject transaction
 
 
@@ -108,6 +124,13 @@ main_reject_bare_on_completion@12:
 get_templated_randomness_beacon_id:
     proto 0 1
     int TMPL_RANDOMNESS_BEACON
+    retsub
+
+
+// smart_contracts.verifiable_shuffle.contract.VerifiableShuffle.get_templated_opup_id() -> uint64:
+get_templated_opup_id:
+    proto 0 1
+    int TMPL_VERIFIABLE_SHUFFLE_OPUP
     retsub
 
 
