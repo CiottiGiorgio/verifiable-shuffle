@@ -2,13 +2,13 @@
 import { useWallet } from '@txnlab/use-wallet'
 import React, { useState } from 'react'
 import ConnectWallet from './components/ConnectWallet'
-import Transact from './components/Transact'
+import Shuffle from './components/Shuffle'
 
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
   const [openWalletModal, setOpenWalletModal] = useState<boolean>(false)
-  const [openDemoModal, setOpenDemoModal] = useState<boolean>(false)
+  const [openShuffleModal, setOpenShuffleModal] = useState<boolean>(false)
   const { activeAddress } = useWallet()
 
   const toggleWalletModal = () => {
@@ -16,7 +16,7 @@ const Home: React.FC<HomeProps> = () => {
   }
 
   const toggleDemoModal = () => {
-    setOpenDemoModal(!openDemoModal)
+    setOpenShuffleModal(!openShuffleModal)
   }
 
   return (
@@ -53,7 +53,7 @@ const Home: React.FC<HomeProps> = () => {
           </div>
 
           <ConnectWallet openModal={openWalletModal} closeModal={toggleWalletModal} />
-          <Transact openModal={openDemoModal} setModalState={setOpenDemoModal} />
+          <Shuffle openModal={openShuffleModal} setModalState={setOpenShuffleModal} />
         </div>
       </div>
     </div>
