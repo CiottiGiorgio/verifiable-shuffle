@@ -21,6 +21,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install algokit
+        run: pipx install algokit
+
+      - name: Bootstrap dependencies
+        run: algokit project bootstrap all --project-name 'verifiable-shuffle-frontend'
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
