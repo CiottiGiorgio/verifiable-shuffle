@@ -31,8 +31,11 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/verifiable-shuffle-frontend-ci.yaml
 
-#  verifiable-shuffle-frontend-release:
-#    name: Run verifiable-shuffle-frontend release
-#    secrets: inherit
-#    uses: ./.github/workflows/verifiable-shuffle-frontend-cd.yaml
-#    needs: verifiable-shuffle-frontend-validate
+  verifiable-shuffle-frontend-release:
+    name: Run verifiable-shuffle-frontend release
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/verifiable-shuffle-frontend-cd.yaml
+    needs: [verifiable-shuffle-contracts-validate, verifiable-shuffle-frontend-validate]

@@ -10,3 +10,9 @@ artifacts = "src/contracts"
 build = { commands = ['npm run build'], description = 'Build frontend' }
 test = { commands = ['npm run test'], description = 'Run frontend tests' }
 lint = { commands = ['npm run lint'], description = 'Lint frontend code' }
+
+# Commands intented for CI only, prefixed with `ci-` by convention
+ci-client-diff = { commands = [
+  'git add -N ./src/contracts',
+  'git diff --exit-code --minimal ./src/contracts',
+], description = 'Check TEAL files for differences' }

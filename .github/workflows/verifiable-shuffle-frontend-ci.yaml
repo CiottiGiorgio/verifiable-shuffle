@@ -40,3 +40,6 @@ jobs:
 
       - name: Build
         run: algokit project run build --project-name 'verifiable-shuffle-frontend'
+
+      - name: Check output stability of the linked clients
+        run: algokit project run ci-client-diff --project-name 'verifiable-shuffle-frontend'
