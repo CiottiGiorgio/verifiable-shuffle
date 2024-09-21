@@ -17,6 +17,7 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [participants, setParticipants] = useState<number>()
   const [winners, setWinners] = useState<number>()
+  const [selectedWinners, setSelectedWinners] = useState<number[]>()
 
   const algodConfig = getAlgodConfigFromViteEnvironment()
   const algodClient = algokit.getAlgoClient({
@@ -65,14 +66,24 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
 
     try {
       enqueueSnackbar('Sending transaction...', { variant: 'info' })
+      setSelectedWinners([])
       const {
-        returns: [knownRandomnessBeacon],
-      } = await verifiableShuffleClientWithEmptySigner.compose().getTemplatedRandomnessBeaconId({}).simulate({ allowEmptySignatures: true })
-      const {
-        returns: [knownOpUp],
-      } = await verifiableShuffleClientWithEmptySigner.compose().getTemplatedOpupId({}).simulate({ allowEmptySignatures: true })
+        returns: [knownRandomnessBeacon, knownOpUp],
+      } = await verifiableShuffleClientWithEmptySigner
+        .compose()
+        .getTemplatedRandomnessBeaconId({})
+        .getTemplatedOpupId({})
+        .simulate({ allowEmptySignatures: true })
 
-      await verifiableShuffleClient.commit(
+      const { appId } = await verifiableShuffleClient.appClient.getAppReference()
+      const localState = await algodClient.accountApplicationInformation(activeAddress, Number(appId)).do()
+      let commitContingentOptIn
+      if (localState['app-local-state']) {
+        commitContingentOptIn = verifiableShuffleClient
+      } else {
+        commitContingentOptIn = verifiableShuffleClient.optIn
+      }
+      await commitContingentOptIn.commit(
         { participants: Number(participants), winners: Number(winners), delay: 1 },
         {
           apps: [Number(knownOpUp)],
@@ -80,23 +91,23 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
         },
       )
 
-      const { return: revealResult } = await retry(
-        async () =>
-          verifiableShuffleClient.reveal(
-            {},
-            {
-              apps: [Number(knownRandomnessBeacon), Number(knownOpUp)],
-              sendParams: { fee: algokit.algos(0.001 * (winners! + 3)) },
-            },
-          ),
+      const revealComposer = verifiableShuffleClient.compose().reveal(
+        {},
         {
-          delay: 10_000,
-          maxTry: 21,
+          apps: [Number(knownRandomnessBeacon), Number(knownOpUp)],
+          sendParams: { fee: algokit.algos(0.001 * (winners! + 3)) },
         },
       )
-      enqueueSnackbar(`Transaction sent: ${revealResult!.winners}`, { variant: 'success' })
+      const {
+        returns: [revealResult],
+      } = await retry(async () => await revealComposer.execute(), {
+        delay: 10_000,
+        maxTry: 21,
+      })
+      enqueueSnackbar(`Selected winners: ${revealResult.winners.join(', ')}`, { variant: 'success' })
       setParticipants(undefined)
       setWinners(undefined)
+      setSelectedWinners(revealResult.winners)
     } catch (e) {
       enqueueSnackbar('Failed to send transaction', { variant: 'error' })
     }
@@ -128,6 +139,15 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
           onChange={(e) => {
             setWinners(Number(e.target.value))
           }}
+        />
+        <br />
+        <input
+          type="text"
+          data-test-id="selected-winners"
+          placeholder="Selected winners"
+          className="input input-bordered w-full disabled"
+          value={selectedWinners?.join(', ') || ''}
+          readOnly={true}
         />
         <div className="modal-action ">
           <button className="btn" onClick={() => setModalState(!openModal)}>
