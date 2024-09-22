@@ -12,7 +12,7 @@ COPY . .
 RUN npx tsc
 RUN npx vite build
 
-FROM nginx:1.24-alpine
+FROM nginx:1.27-alpine
 
 COPY --from=BUILDER /app/dist/ /usr/share/nginx/html/
 
