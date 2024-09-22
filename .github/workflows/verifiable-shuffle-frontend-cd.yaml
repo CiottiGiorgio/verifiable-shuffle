@@ -39,12 +39,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags:
+            type=sha
 
-      - name: Extract npm package version
-        id: npm-package-version
-        uses: martinbeentjes/npm-get-version-action@v1.3.1
-        with:
-          path: projects/verifiable-shuffle-frontend
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -52,4 +49,4 @@ jobs:
           context: projects/verifiable-shuffle-frontend
           platforms: linux/arm64
           push: true
-          tags: ${{ steps.npm-package-version.outputs.current-version }}
+          tags: ${{ steps.meta.outputs.tags }}
