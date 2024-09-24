@@ -7,6 +7,7 @@ import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment 
 import { VerifiableShuffleClient } from '../contracts/VerifiableShuffle'
 import { getShuffleDeploymentConfigFromViteEnvironment } from '../utils/getShuffleDeploymentConfig'
 import { makeEmptyTransactionSigner } from 'algosdk'
+import { lookupAccountByAddress } from '@algorandfoundation/algokit-utils'
 
 interface ShuffleInterface {
   openModal: boolean
@@ -76,9 +77,9 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
         .simulate({ allowEmptySignatures: true })
 
       const { appId } = await verifiableShuffleClient.appClient.getAppReference()
-      const localState = await algodClient.accountApplicationInformation(activeAddress, Number(appId)).do()
+      const localState = await lookupAccountByAddress(activeAddress, indexerClient)
       let commitContingentOptIn
-      if (localState['app-local-state']) {
+      if (localState.account['apps-local-state']?.find((localState) => localState.id == appId) !== undefined) {
         commitContingentOptIn = verifiableShuffleClient
       } else {
         commitContingentOptIn = verifiableShuffleClient.optIn
