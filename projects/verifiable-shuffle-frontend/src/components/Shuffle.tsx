@@ -92,13 +92,20 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
         },
       )
 
-      const revealComposer = verifiableShuffleClient.compose().reveal(
-        {},
-        {
-          apps: [Number(knownRandomnessBeacon), Number(knownOpUp)],
-          sendParams: { fee: algokit.algos(0.001 * (winners! + 3)) },
-        },
-      )
+      // FIXME
+      // While we wait for this fix: https://github.com/algorandfoundation/algokit-client-generator-ts/pull/109#issuecomment-2372275240
+      // We will just append a clear state transaction to the group since we can't just .closeOut.reveal().
+      // This is significantly worse, but I don't want to manually change the client because it will lead to output instability.
+      const revealComposer = verifiableShuffleClient
+        .compose()
+        .reveal(
+          {},
+          {
+            apps: [Number(knownRandomnessBeacon), Number(knownOpUp)],
+            sendParams: { fee: algokit.algos(0.001 * (winners! + 3)) },
+          },
+        )
+        .clearState()
       const {
         returns: [revealResult],
       } = await retry(async () => await revealComposer.execute(), {
