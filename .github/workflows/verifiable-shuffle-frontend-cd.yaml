@@ -40,7 +40,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}},value=v1.0.1
+            type=semver,pattern={{version}},value=v1.0.2
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

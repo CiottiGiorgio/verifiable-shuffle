@@ -106,12 +106,13 @@ const Shuffle = ({ openModal, setModalState }: ShuffleInterface) => {
           },
         )
         .clearState()
+      await retry(async () => await revealComposer.simulate(), {
+        delay: 1_000,
+        maxTry: 31,
+      })
       const {
         returns: [revealResult],
-      } = await retry(async () => await revealComposer.execute(), {
-        delay: 10_000,
-        maxTry: 21,
-      })
+      } = await revealComposer.execute()
       enqueueSnackbar(`Selected winners: ${revealResult.winners.join(', ')}`, { variant: 'success' })
       setParticipants(undefined)
       setWinners(undefined)
