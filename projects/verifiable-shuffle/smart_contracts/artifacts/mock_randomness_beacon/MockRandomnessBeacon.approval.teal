@@ -1,14 +1,24 @@
 #pragma version 10
 
 smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.approval_program:
-    txn NumAppArgs
-    bz main_bare_routing@5
-    method "must_get(uint64,byte[])byte[]"
-    txna ApplicationArgs 0
-    match main_must_get_route@2
-    err // reject transaction
+    intcblock 0 1
+    bytecblock TMPL_RANDOMNESS_OUTPUT
+    callsub __puya_arc4_router__
+    return
 
-main_must_get_route@2:
+
+// smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.__puya_arc4_router__() -> uint64:
+__puya_arc4_router__:
+    proto 0 1
+    txn NumAppArgs
+    bz __puya_arc4_router___bare_routing@5
+    pushbytes 0x47c20c23 // method "must_get(uint64,byte[])byte[]"
+    txna ApplicationArgs 0
+    match __puya_arc4_router___must_get_route@2
+    intc_0 // 0
+    retsub
+
+__puya_arc4_router___must_get_route@2:
     txn OnCompletion
     !
     assert // OnCompletion is NoOp
@@ -17,31 +27,34 @@ main_must_get_route@2:
     txna ApplicationArgs 1
     txna ApplicationArgs 2
     callsub must_get
-    byte 0x151f7c75
+    pushbytes 0x151f7c75
     swap
     concat
     log
-    int 1
-    return
+    intc_1 // 1
+    retsub
 
-main_bare_routing@5:
+__puya_arc4_router___bare_routing@5:
     txn OnCompletion
-    !
-    assert // reject transaction
+    bnz __puya_arc4_router___after_if_else@9
     txn ApplicationID
     !
     assert // is creating
-    int 1
-    return
+    intc_1 // 1
+    retsub
+
+__puya_arc4_router___after_if_else@9:
+    intc_0 // 0
+    retsub
 
 
 // smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.must_get(round: bytes, user_data: bytes) -> bytes:
 must_get:
     proto 2 1
-    byte TMPL_RANDOMNESS_OUTPUT
+    bytec_0 // TMPL_RANDOMNESS_OUTPUT
     len
     itob
     extract 6 2
-    byte TMPL_RANDOMNESS_OUTPUT
+    bytec_0 // TMPL_RANDOMNESS_OUTPUT
     concat
     retsub
