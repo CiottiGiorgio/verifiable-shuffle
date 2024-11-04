@@ -32,6 +32,10 @@ def build(output_dir: Path, contract_path: Path) -> Path:
             f"--out-dir={output_dir}",
             "--output-arc32",
             "--debug-level=0",
+            # FIXME: Eventually we want to build debug artifacts too.
+            #  Unfortunately there's a problem with venv paths differing between Unix and Windows which means that,
+            #  even though the artifacts are stable, they show up differently in CI and make the pipeline fail.
+            "--no-output-source-map",
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
