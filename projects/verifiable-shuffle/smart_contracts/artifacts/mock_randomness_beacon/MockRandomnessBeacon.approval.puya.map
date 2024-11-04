@@ -1,7 +1,7 @@
 {
   "version": 3,
   "sources": [
-    "..\\..\\mock_randomness_beacon\\contract.py"
+    "../../mock_randomness_beacon/contract.py"
   ],
   "mappings": ";;;;AAKA;;;AAAA;;AAAA;;;AAAA;;;;;;AAAA;;;AAAA;;;;AAAA;AAAA;AACK;;AAAA;AAAA;AAAA;;AAAA;AADL;;;AAAA;;;AACK;;;AAAA;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AADL;;AAAA;;;;;;;;;AAAA;AAAA;AACA;;;AAIiC;AAAlB;AAAA;AAAA;;;AAAkB;AAAlB;AAAP",
   "op_pc_offset": 2,
