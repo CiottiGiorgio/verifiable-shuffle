@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "sources": [
+    "../../verifiable_shuffle_opup/contract.py"
+  ],
+  "mappings": ";AAGA;;AAAA;AAAA;AACK;;AAAA;AAAA",
+  "op_pc_offset": 0,
+  "pc_events": {}
+}

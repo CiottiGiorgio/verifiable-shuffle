@@ -1,5 +1,7 @@
-#pragma version 10
+#pragma version 11
+#pragma typetrack false
 
-smart_contracts.verifiable_shuffle_opup.contract.VerifiableShuffleOpup.clear_state_program:
-    pushint 1 // 1
+// algopy.arc4.ARC4Contract.clear_state_program() -> uint64:
+main:
+    pushint 1
     return

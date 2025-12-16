@@ -1,20 +1,11 @@
-#pragma version 10
+#pragma version 11
+#pragma typetrack false
 
-smart_contracts.verifiable_shuffle_opup.contract.VerifiableShuffleOpup.approval_program:
-    callsub __puya_arc4_router__
-    return
-
-
-// smart_contracts.verifiable_shuffle_opup.contract.VerifiableShuffleOpup.__puya_arc4_router__() -> uint64:
-__puya_arc4_router__:
-    proto 0 1
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
     txn NumAppArgs
-    bnz __puya_arc4_router___after_if_else@6
+    !
+    assert
     txn OnCompletion
-    bnz __puya_arc4_router___after_if_else@6
-    pushint 1 // 1
-    retsub
-
-__puya_arc4_router___after_if_else@6:
-    pushint 0 // 0
-    retsub
+    !
+    return

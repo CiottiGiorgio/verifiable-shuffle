@@ -1,4 +1,4 @@
-from typing import Literal, Tuple
+from typing import Literal
 
 from algopy import (
     Application,
@@ -362,7 +362,7 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
 
 
 @subroutine
-def linear_search(bin_list: Bytes, key: UInt64) -> Tuple[bool, UInt64, UInt64]:
+def linear_search(bin_list: Bytes, key: UInt64) -> tuple[bool, UInt64, UInt64]:
     for i in urange(UInt64(0), bin_list.length, UInt64(8)):
         bin_key = op.extract_uint32(bin_list, i)
         if bin_key == key:

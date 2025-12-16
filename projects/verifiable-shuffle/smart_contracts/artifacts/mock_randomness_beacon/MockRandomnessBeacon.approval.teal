@@ -1,60 +1,59 @@
-#pragma version 10
+#pragma version 11
+#pragma typetrack false
 
-smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.approval_program:
-    intcblock 0 1
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
     bytecblock TMPL_RANDOMNESS_OUTPUT
-    callsub __puya_arc4_router__
+    txn NumAppArgs
+    bz main___algopy_default_create@5
+    pushbytes 0x47c20c23 // method "must_get(uint64,byte[])byte[]"
+    txna ApplicationArgs 0
+    match main_must_get_route@3
+    err
+
+main_must_get_route@3:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    &&
+    assert
+    b must_get
+
+main___algopy_default_create@5:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
     return
 
 
-// smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.__puya_arc4_router__() -> uint64:
-__puya_arc4_router__:
-    proto 0 1
-    txn NumAppArgs
-    bz __puya_arc4_router___bare_routing@5
-    pushbytes 0x47c20c23 // method "must_get(uint64,byte[])byte[]"
-    txna ApplicationArgs 0
-    match __puya_arc4_router___must_get_route@2
-    intc_0 // 0
-    retsub
-
-__puya_arc4_router___must_get_route@2:
-    txn OnCompletion
-    !
-    assert // OnCompletion is NoOp
-    txn ApplicationID
-    assert // is not creating
-    txna ApplicationArgs 1
-    txna ApplicationArgs 2
-    callsub must_get
-    pushbytes 0x151f7c75
-    swap
-    concat
-    log
-    intc_1 // 1
-    retsub
-
-__puya_arc4_router___bare_routing@5:
-    txn OnCompletion
-    bnz __puya_arc4_router___after_if_else@9
-    txn ApplicationID
-    !
-    assert // is creating
-    intc_1 // 1
-    retsub
-
-__puya_arc4_router___after_if_else@9:
-    intc_0 // 0
-    retsub
-
-
-// smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.must_get(round: bytes, user_data: bytes) -> bytes:
+// smart_contracts.mock_randomness_beacon.contract.MockRandomnessBeacon.must_get[routing]() -> void:
 must_get:
-    proto 2 1
+    txna ApplicationArgs 1
+    len
+    pushint 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    pushint 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    swap
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
     bytec_0 // TMPL_RANDOMNESS_OUTPUT
     len
     itob
     extract 6 2
     bytec_0 // TMPL_RANDOMNESS_OUTPUT
     concat
-    retsub
+    pushbytes 0x151f7c75
+    swap
+    concat
+    log
+    pushint 1
+    return

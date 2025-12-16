@@ -1,0 +1,19 @@
+{
+  "version": 3,
+  "sources": [
+    "../../mock_randomness_beacon/contract.py"
+  ],
+  "mappings": "AAKA;;AAAA;;;AAAA;;;;;;AAAA;;;AAAA;;;;AAAA;AACK;;AAAA;AAAA;;AAAA;AAAA;AAAA;;;;;;;;;;;AAAA;;;AAAA;AAAA;;AAAA;AAAA;AAAA;;;AAAA;AAAA;;AAAA;AAAA;;AAAA;AAAA;AAAA;AAAA;AAAA;AAI4B;AAAlB;AAAA;AAAA;;;AAAkB;AAAlB;AAJV;;;;;;AAAA;AAAA;AAAA;AAAA;;AAAA",
+  "op_pc_offset": 1,
+  "pc_events": {
+    "44": {
+      "error": "invalid number of bytes for arc4.uint64"
+    },
+    "51": {
+      "error": "invalid array length header"
+    },
+    "58": {
+      "error": "invalid number of bytes for arc4.dynamic_array<arc4.uint8>"
+    }
+  }
+}
