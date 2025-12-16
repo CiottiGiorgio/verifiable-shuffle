@@ -138,6 +138,9 @@ def deploy() -> None:
         verifiable_shuffle_client.send.clear_state()
         raise
 
+    if not reveal.abi_return:
+        raise ValueError("Expected reveal to return an ABI value.")
+
     logger.info(
         f"Called close_out_reveal on {verifiable_shuffle_client.app_spec.name} "
         f"({verifiable_shuffle_client.app_id}) "
