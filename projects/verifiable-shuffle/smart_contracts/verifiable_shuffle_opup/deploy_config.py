@@ -2,51 +2,45 @@ import logging
 
 import algokit_utils
 from algokit_utils import (
-    EnsureBalanceParameters,
-    TransactionParameters,
-    ensure_funded,
-    get_account,
+    AlgoAmount,
+    AppClientBareCallParams,
 )
-from algosdk.v2client.algod import AlgodClient
-from algosdk.v2client.indexer import IndexerClient
 
 logger = logging.getLogger(__name__)
 
 
 # define deployment behaviour based on supplied app spec
-def deploy(
-    algod_client: AlgodClient,
-    indexer_client: IndexerClient,
-    app_spec: algokit_utils.ApplicationSpecification,
-    deployer: algokit_utils.Account,
-) -> None:
+def deploy() -> None:
     from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_client import (
-        VerifiableShuffleOpupClient,
+        VerifiableShuffleOpupFactory,
     )
 
-    app_client = VerifiableShuffleOpupClient(
-        algod_client,
-        creator=deployer,
-        indexer_client=indexer_client,
+    algorand = algokit_utils.AlgorandClient.from_environment()
+    dispenser_ = algorand.account.from_environment("DISPENSER")
+    deployer_ = algorand.account.from_environment("DEPLOYER")
+    user_ = algorand.account.from_environment("USER")
+
+    factory = algorand.client.get_typed_app_factory(
+        VerifiableShuffleOpupFactory, default_sender=deployer_.address
     )
-    app_client.deploy(
-        on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
+
+    app_client, deployment_result = factory.deploy(
         on_update=algokit_utils.OnUpdate.AppendApp,
+        on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
     )
 
-    user = get_account(algod_client, "USER", fund_with_algos=0)
-    ensure_funded(
-        algod_client,
-        EnsureBalanceParameters(
-            account_to_fund=user,
-            min_spending_balance_micro_algos=1_000_000,
-            min_funding_increment_micro_algos=1_000_000,
-        ),
+    algorand.account.ensure_funded(
+        account_to_fund=user_,
+        dispenser_account=dispenser_,
+        min_spending_balance=AlgoAmount(algo=1),
+        min_funding_increment=AlgoAmount(algo=1),
     )
 
-    app_client.no_op(
-        transaction_parameters=TransactionParameters(
-            signer=user.signer, sender=user.address
+    app_client.new_group().add_transaction(
+        app_client.app_client.create_transaction.bare.call(
+            params=AppClientBareCallParams(sender=user_.address, signer=user_.signer)
         )
+    ).send()
+    logger.info(
+        f"Called bare NoOp on {app_client.app_spec.name} ({app_client.app_id}) "
     )
-    logger.info(f"Called bare NoOp on {app_spec.contract.name} ({app_client.app_id}) ")

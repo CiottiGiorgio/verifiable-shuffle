@@ -1,6 +1,5 @@
 import base64
 import hashlib
-import json
 
 import algokit_utils
 import pytest
@@ -11,13 +10,12 @@ from algokit_utils import (
     AppFactoryDeployResult,
     CommonAppCallParams,
     LogicError,
-    SigningAccount, AppSourceMaps,
+    SigningAccount,
 )
 from algosdk.constants import min_txn_fee
 
 import smart_contracts.mock_randomness_beacon.config as cfg_rb
 import smart_contracts.verifiable_shuffle.config as cfg_vs
-import smart_contracts.verifiable_shuffle.errors as err
 from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
     MockRandomnessBeaconFactory,
 )
@@ -35,7 +33,7 @@ from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_c
 def deployer(algorand_client: AlgorandClient) -> SigningAccount:
     account = algorand_client.account.from_environment("DEPLOYER")
     algorand_client.account.ensure_funded_from_environment(
-        account_to_fund=account.address, min_spending_balance=AlgoAmount.from_algo(10)
+        account_to_fund=account.address, min_spending_balance=AlgoAmount(algo=10)
     )
     return account
 
@@ -44,7 +42,7 @@ def deployer(algorand_client: AlgorandClient) -> SigningAccount:
 def user_account(algorand_client: AlgorandClient) -> SigningAccount:
     account = algorand_client.account.random()
     algorand_client.account.ensure_funded_from_environment(
-        account_to_fund=account.address, min_spending_balance=AlgoAmount.from_algo(10)
+        account_to_fund=account.address, min_spending_balance=AlgoAmount(algo=10)
     )
     return account
 
@@ -154,8 +152,8 @@ def test_sequence(
         ),
         params=CommonAppCallParams(
             app_references=[opup_deployment.app.app_id],
-            extra_fee=AlgoAmount.from_micro_algo(
-                ((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 1)
+            extra_fee=AlgoAmount(
+                micro_algo=((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 1)
                 * min_txn_fee
             ),
         ),
@@ -168,8 +166,8 @@ def test_sequence(
                 mock_randomness_beacon_deployment.app.app_id,
                 opup_deployment.app.app_id,
             ],
-            extra_fee=AlgoAmount.from_micro_algo(
-                ((winners * cfg_vs.REVEAL_SINGLE_WINNER_OP_COST) // 700 + 2)
+            extra_fee=AlgoAmount(
+                micro_algo=((winners * cfg_vs.REVEAL_SINGLE_WINNER_OP_COST) // 700 + 2)
                 * min_txn_fee
             ),
         )
@@ -213,8 +211,10 @@ def test_safety_bounds(
             ),
             params=CommonAppCallParams(
                 app_references=[opup_deployment.app.app_id],
-                extra_fee=AlgoAmount.from_micro_algo(
-                    ((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2 + 1)
+                extra_fee=AlgoAmount(
+                    micro_algo=(
+                        (winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2 + 1
+                    )
                     * min_txn_fee
                 ),
             ),
@@ -228,8 +228,8 @@ def test_safety_bounds(
         ),
         params=CommonAppCallParams(
             app_references=[opup_deployment.app.app_id],
-            extra_fee=AlgoAmount.from_micro_algo(
-                ((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2)
+            extra_fee=AlgoAmount(
+                micro_algo=((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2)
                 * min_txn_fee
             ),
         ),
@@ -263,8 +263,8 @@ def test_special_case(
         ),
         params=CommonAppCallParams(
             app_references=[opup_deployment.app.app_id],
-            extra_fee=AlgoAmount.from_micro_algo(
-                ((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2)
+            extra_fee=AlgoAmount(
+                micro_algo=((winners * cfg_vs.COMMIT_SINGLE_WINNER_OP_COST) // 700 + 2)
                 * min_txn_fee
             ),
         ),

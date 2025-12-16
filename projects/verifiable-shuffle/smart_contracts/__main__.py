@@ -171,6 +171,19 @@ def main(action: str, contract_name: str | None = None) -> None:
         if contract_name is None or contract.name == contract_name
     ]
 
+    def contract_priority(sc: SmartContract) -> int:
+        match sc.name:
+            case "verifiable_shuffle_opup":
+                return 0
+            case "mock_randomness_beacon":
+                return 1
+            case "verifiable_shuffle":
+                return 2
+            case _:
+                return 3
+
+    filtered_contracts.sort(key=contract_priority)
+
     match action:
         case "build":
             for contract in filtered_contracts:
