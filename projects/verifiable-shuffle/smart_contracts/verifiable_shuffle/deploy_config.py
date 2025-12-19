@@ -136,6 +136,8 @@ def deploy() -> None:
         reveal = reveal_with_retry()
     except:
         verifiable_shuffle_client.send.clear_state()
+        logger.info(f"Called clear_state on {verifiable_shuffle_client.app_spec.name} "
+                    f"({verifiable_shuffle_client.app_id}) ")
         raise
 
     if not reveal.abi_return:
