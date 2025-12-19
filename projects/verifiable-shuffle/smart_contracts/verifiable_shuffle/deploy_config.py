@@ -64,7 +64,7 @@ def deploy() -> None:
         randomness_beacon_from_env = os.environ.get(cfg.RANDOMNESS_BEACON)
         if randomness_beacon_from_env is None:
             raise Exception(
-                f"{cfg.RANDOMNESS_BEACON} environment variable not set or not found in localnet"
+                f"{cfg.RANDOMNESS_BEACON} environment variable not set or found"
             )
         randomness_beacon = int(randomness_beacon_from_env)
 
