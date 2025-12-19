@@ -5,6 +5,7 @@ import os
 import algokit_utils
 from algokit_utils import (
     AlgoAmount,
+    AppClientBareCallParams,
     AppClientCompilationParams,
     CommonAppCallParams,
 )
@@ -135,9 +136,13 @@ def deploy() -> None:
     try:
         reveal = reveal_with_retry()
     except:
-        verifiable_shuffle_client.send.clear_state(params=CommonAppCallParams(sender=user_.address, signer=user_.signer))
-        logger.info(f"Called clear_state on {verifiable_shuffle_client.app_spec.name} "
-                    f"({verifiable_shuffle_client.app_id}) ")
+        verifiable_shuffle_client.send.clear_state(
+            params=AppClientBareCallParams(sender=user_.address, signer=user_.signer)
+        )
+        logger.info(
+            f"Called clear_state on {verifiable_shuffle_client.app_spec.name} "
+            f"({verifiable_shuffle_client.app_id}) "
+        )
         raise
 
     if not reveal.abi_return:
