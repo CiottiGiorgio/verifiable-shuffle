@@ -95,6 +95,19 @@ def deploy() -> None:
         min_funding_increment=AlgoAmount(algo=1),
     )
 
+    # Just in case something went wrong in previous deployment runs, and we didn't actually clear the state,
+    #  let's check if we are already opted in.
+    try:
+        verifiable_shuffle_client.state.local_state(user_.address).get_all()
+        logger.info(
+            "Cleaning up after a previous failed deployment. Called clear_state."
+        )
+        verifiable_shuffle_client.send.clear_state(
+            params=AppClientBareCallParams(sender=user_.address, signer=user_.signer)
+        )
+    except Exception:
+        pass
+
     commitment = verifiable_shuffle_client.send.opt_in.commit(
         CommitArgs(
             delay=int(safety_gap),
