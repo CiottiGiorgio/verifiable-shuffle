@@ -13,12 +13,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install poetry
-        run: pipx install poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry poetry-plugin-export
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: "poetry"
 
       - name: Install algokit
@@ -34,7 +36,7 @@ jobs:
           git config --global user.email "actions@github.com" && git config --global user.name "github-actions"
 
       - name: Deploy to testnet
-        run: algokit deploy testnet --project-name 'verifiable-shuffle'
+        run: algokit project deploy testnet --project-name 'verifiable-shuffle'
         env:
           # This is the account that becomes the creator of the contract
           DEPLOYER_MNEMONIC: ${{ secrets.DEPLOYER_MNEMONIC }}
