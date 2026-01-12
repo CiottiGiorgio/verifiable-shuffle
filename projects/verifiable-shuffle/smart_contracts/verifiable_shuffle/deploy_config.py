@@ -76,7 +76,7 @@ def deploy() -> None:
     verifiable_shuffle_factory = algorand.client.get_typed_app_factory(
         VerifiableShuffleFactory, default_sender=deployer_.address
     )
-    verifiable_shuffle_client, deployment_result = verifiable_shuffle_factory.deploy(
+    verifiable_shuffle_client, _ = verifiable_shuffle_factory.deploy(
         on_update=algokit_utils.OnUpdate.UpdateApp,
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         compilation_params=AppClientCompilationParams(

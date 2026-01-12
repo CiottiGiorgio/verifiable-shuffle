@@ -321,7 +321,7 @@ class VerifiableShuffle(ARC4Contract, scratch_slots=(urange(cfg.BINS),)):
             # Here we "just" need to swap a[i] with a[j].
             # a[i] and a[j] have possibly already been written to so we need to look them
             #  up in the dictionary.
-            i_found, i_pos, i_maybe = linear_search(
+            i_found, _i_pos, i_maybe = linear_search(
                 op.Scratch.load_bytes(i % cfg.BINS), i
             )
             i_value = i_maybe if i_found else i

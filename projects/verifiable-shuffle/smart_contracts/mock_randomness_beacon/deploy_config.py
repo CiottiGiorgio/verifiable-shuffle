@@ -24,7 +24,7 @@ def deploy() -> None:
             MockRandomnessBeaconFactory, default_sender=deployer_.address
         )
 
-        app_client, deployment_result = factory.deploy(
+        app_client, _ = factory.deploy(
             on_update=algokit_utils.OnUpdate.AppendApp,
             on_schema_break=algokit_utils.OnSchemaBreak.AppendApp,
             compilation_params=AppClientCompilationParams(
