@@ -18,7 +18,7 @@ tenacity = "^9.0.0"
 [tool.poetry.group.dev.dependencies]
 algokit-client-generator = "^2.1.0"
 black = {extras = ["d"], version = "*"}
-ruff = "^0.14.10"
+ruff = "^0.14.11"
 mypy = "^1"
 pytest = "*"
 pytest-cov = "*"
