@@ -13,16 +13,16 @@ from algokit_utils import (
     SigningAccount,
 )
 from algosdk.constants import min_txn_fee
+from smart_contracts.artifacts.verifiable_shuffle.verifiable_shuffle_client import (
+    CommitArgs,
+    VerifiableShuffleClient,
+    VerifiableShuffleFactory,
+)
 
 import smart_contracts.mock_randomness_beacon.config as cfg_rb
 import smart_contracts.verifiable_shuffle.config as cfg_vs
 from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
     MockRandomnessBeaconFactory,
-)
-from smart_contracts.artifacts.verifiable_shuffle.verifiable_shuffle_client import (
-    CommitArgs,
-    VerifiableShuffleClient,
-    VerifiableShuffleFactory,
 )
 from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_client import (
     VerifiableShuffleOpupFactory,

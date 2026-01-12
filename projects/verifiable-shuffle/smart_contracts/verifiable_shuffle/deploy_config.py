@@ -8,6 +8,7 @@ from algokit_utils import (
     AppClientBareCallParams,
     AppClientCompilationParams,
     CommonAppCallParams,
+    SendAppTransactionResult,
 )
 from algosdk.constants import min_txn_fee
 from tenacity import retry, stop_after_attempt, wait_fixed
@@ -17,15 +18,16 @@ logger = logging.getLogger(__name__)
 
 # define deployment behaviour based on supplied app spec
 def deploy() -> None:
-    import smart_contracts.verifiable_shuffle.config as cfg
-    from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
-        MockRandomnessBeaconClient,
-        MockRandomnessBeaconFactory,
-    )
     from smart_contracts.artifacts.verifiable_shuffle.verifiable_shuffle_client import (
         CommitArgs,
         Reveal,
         VerifiableShuffleFactory,
+    )
+
+    import smart_contracts.verifiable_shuffle.config as cfg
+    from smart_contracts.artifacts.mock_randomness_beacon.mock_randomness_beacon_client import (
+        MockRandomnessBeaconClient,
+        MockRandomnessBeaconFactory,
     )
     from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_client import (
         VerifiableShuffleOpupClient,
@@ -76,7 +78,7 @@ def deploy() -> None:
     verifiable_shuffle_factory = algorand.client.get_typed_app_factory(
         VerifiableShuffleFactory, default_sender=deployer_.address
     )
-    verifiable_shuffle_client, deployment_result = verifiable_shuffle_factory.deploy(
+    verifiable_shuffle_client, _ = verifiable_shuffle_factory.deploy(
         on_update=algokit_utils.OnUpdate.UpdateApp,
         on_schema_break=algokit_utils.OnSchemaBreak.ReplaceApp,
         compilation_params=AppClientCompilationParams(
@@ -133,7 +135,7 @@ def deploy() -> None:
     #  we could be waiting for the VRF off-the-chain service to upload the VRF result to the
     #  Randomness Beacon.
     @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
-    def reveal_with_retry() -> algokit_utils.SendAppTransactionResult[Reveal]:
+    def reveal_with_retry() -> SendAppTransactionResult[Reveal]:
         return verifiable_shuffle_client.send.close_out.reveal(
             params=CommonAppCallParams(
                 app_references=[randomness_beacon, opup],
