@@ -9,16 +9,16 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 algokit-utils = "^4.0.0"
-python-dotenv = "^1.0.0"
+python-dotenv = "^1.2.2"
 algorand-python = "^3"
 algorand-python-testing = "^1"
 lib-pcg-algopy = "^1.0.0"
-tenacity = "^9.0.0"
+tenacity = "^9.1.4"
 
 [tool.poetry.group.dev.dependencies]
 algokit-client-generator = "^2.1.0"
 black = {extras = ["d"], version = "*"}
-ruff = "^0.9.4"
+ruff = "^0.15.4"
 mypy = "^1"
 pytest = "*"
 pytest-cov = "*"
