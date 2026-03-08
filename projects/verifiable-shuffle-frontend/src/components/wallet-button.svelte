@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { useWallet, type Wallet, WalletId } from '@txnlab/use-wallet-svelte';
+  import {ellipseAddress} from "$lib/utils";
 
 	const {
 		wallets, // List of available wallets
@@ -36,6 +37,6 @@
 	<button disabled={connecting} onclick={() => handleConnect()}>Connect</button>
 {:else}
 	<button disabled={connecting} onclick={() => luteWallet.disconnect()}
-		>{activeAddress.current}</button
+		>{ellipseAddress(activeAddress.current)}</button
 	>
 {/if}
