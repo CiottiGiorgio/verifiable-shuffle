@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { useWallet, type Wallet, WalletId } from '@txnlab/use-wallet-svelte';
-  import {ellipseAddress} from "$lib/utils";
+	import { ellipseAddress } from '$lib/utils';
 
 	const {
 		wallets, // List of available wallets

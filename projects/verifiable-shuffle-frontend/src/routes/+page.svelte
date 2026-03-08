@@ -26,8 +26,7 @@
 
 		const simResult = await shuffleClient
 			.newGroup()
-      .optIn
-			.commit({
+			.optIn.commit({
 				args: { delay: 1, participants: 5, winners: 3 },
 				extraFee: microAlgos(10_000) // Adds 10_000 microAlgos to the standard fee
 			})
