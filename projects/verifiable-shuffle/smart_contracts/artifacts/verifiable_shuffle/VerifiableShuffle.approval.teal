@@ -623,6 +623,10 @@ reveal:
     itxn_submit
     itxn LastLog
     dupn 2
+    extract 0 4
+    bytec_1 // 0x151f7c75
+    ==
+    assert // application log value is not the result of an ABI return
     extract 4 0
     dup
     intc_1 // 0
@@ -633,10 +637,6 @@ reveal:
     len
     ==
     assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
-    extract 0 4
-    bytec_1 // 0x151f7c75
-    ==
-    assert // application log value is not the result of an ABI return
     intc_1 // 0
 
 reveal_for_header@3:
