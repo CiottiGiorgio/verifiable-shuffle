@@ -8,7 +8,7 @@
 	import { AlgorandClient, microAlgos } from '@algorandfoundation/algokit-utils';
 	import { PUBLIC_APP_CREATOR } from '$env/static/public';
 
-	const { activeAddress, activeWallet, transactionSigner } = useWallet();
+	const { activeAddress, transactionSigner } = useWallet();
 
 	const algodConfig = getAlgodConfigFromSvelteEnvironment();
 	const indexerConfig = getIndexerConfigFromSvelteEnvironment();
@@ -28,7 +28,7 @@
 			.newGroup()
 			.optIn.commit({
 				args: { delay: 1, participants: 5, winners: 3 },
-				extraFee: microAlgos(10_000) // Adds 10_000 microAlgos to the standard fee
+				extraFee: microAlgos(10_000)
 			})
 			.simulate({ allowUnnamedResources: true });
 		console.log(simResult);
