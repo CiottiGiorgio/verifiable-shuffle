@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { useWallet, type Wallet, WalletId } from '@txnlab/use-wallet-svelte';
+	import { useWallet, WalletId } from '@txnlab/use-wallet-svelte';
 	import { ellipseAddress } from '$lib/utils';
 
 	const {
 		wallets, // List of available wallets
-		activeWallet, // Currently active wallet (function)
 		isReady,
-		activeWalletAccounts,
 		activeAddress
 	} = useWallet();
 	let luteWallet = $derived(wallets.find((wallet) => wallet.id === WalletId.LUTE));
@@ -23,9 +21,15 @@
 		}
 	};
 
-	const setActiveAccount = (event: Event, wallet: Wallet) => {
-		const selectElement = event.target as HTMLSelectElement;
-		wallet.setActiveAccount(selectElement.value);
+	const handleDisconnect = async () => {
+		connecting = true;
+		try {
+			await luteWallet?.disconnect();
+		} catch (error) {
+			console.error('Failed to disconnect:', error);
+		} finally {
+			connecting = false;
+		}
 	};
 </script>
 
@@ -34,9 +38,9 @@
 {:else if !luteWallet}
 	<button disabled>Error loading Lute</button>
 {:else if !activeAddress.current}
-	<button disabled={connecting} onclick={() => handleConnect()}>Connect</button>
+	<button disabled={connecting} onclick={handleConnect}>Connect</button>
 {:else}
-	<button disabled={connecting} onclick={() => luteWallet.disconnect()}
+	<button disabled={connecting} onclick={handleDisconnect}
 		>{ellipseAddress(activeAddress.current)}</button
 	>
 {/if}
