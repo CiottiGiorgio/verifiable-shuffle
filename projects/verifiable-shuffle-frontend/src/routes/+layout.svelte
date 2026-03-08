@@ -1,13 +1,15 @@
 <script lang="ts">
-  import favicon from '$lib/assets/favicon.svg';
-  import { WalletManager, WalletId, NetworkId, useWalletContext } from '@txnlab/use-wallet-svelte';
-  import WalletButton from '../components/wallet-button.svelte';
+	import favicon from '$lib/assets/favicon.svg';
+	import { WalletManager, WalletId, NetworkId, useWalletContext } from '@txnlab/use-wallet-svelte';
+	import WalletButton from '../components/wallet-button.svelte';
 
-  // Create manager instance (moved from wallet-button.svelte)
-  useWalletContext(new WalletManager({
-    wallets: [WalletId.LUTE],
-    defaultNetwork: NetworkId.TESTNET
-  }));
+	// Create manager instance (moved from wallet-button.svelte)
+	useWalletContext(
+		new WalletManager({
+			wallets: [WalletId.LUTE],
+			defaultNetwork: NetworkId.TESTNET
+		})
+	);
 
 	let { children } = $props();
 </script>

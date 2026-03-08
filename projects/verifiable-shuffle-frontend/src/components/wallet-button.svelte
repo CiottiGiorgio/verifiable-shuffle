@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {useWallet, type Wallet, WalletId} from '@txnlab/use-wallet-svelte';
+	import { useWallet, type Wallet, WalletId } from '@txnlab/use-wallet-svelte';
 
 	const {
 		wallets, // List of available wallets
@@ -8,7 +8,7 @@
 		activeWalletAccounts,
 		activeAddress
 	} = useWallet();
-  let luteWallet = $derived(wallets.find((wallet) => wallet.id === WalletId.LUTE));
+	let luteWallet = $derived(wallets.find((wallet) => wallet.id === WalletId.LUTE));
 	let connecting = $state(false);
 
 	const handleConnect = async () => {
@@ -29,15 +29,13 @@
 </script>
 
 {#if !isReady()}
-  <button disabled>Loading...</button>
+	<button disabled>Loading...</button>
+{:else if !luteWallet}
+	<button disabled>Error loading Lute</button>
+{:else if !activeAddress.current}
+	<button disabled={connecting} onclick={() => handleConnect()}>Connect</button>
 {:else}
-  {#if !luteWallet}
-    <button disabled>Error loading Lute</button>
-  {:else}
-    {#if !activeAddress.current}
-      <button disabled={connecting} onclick={() => handleConnect()}>Connect</button>
-    {:else}
-      <button disabled={connecting} onclick={() => luteWallet.disconnect()}>{activeAddress.current}</button>
-    {/if}
-  {/if}
+	<button disabled={connecting} onclick={() => luteWallet.disconnect()}
+		>{activeAddress.current}</button
+	>
 {/if}
