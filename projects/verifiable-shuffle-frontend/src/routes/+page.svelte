@@ -5,56 +5,73 @@
 	// Reactive shuffle client that automatically updates when wallet state changes
 	const shuffleClientManager = createShuffleClient();
 
+	// Track loading state to disable buttons during execution
+	let isExecuting = $state(false);
+
 	/**
 	 * Handle commit action. Type-safe: only called when wallet is connected.
 	 */
 	const handleCommit = async () => {
-		// Get the app client (performs blockchain query to find deployed contract)
-		const shuffleClient = await shuffleClientManager.getAppClient();
-		if (!shuffleClient) return; // Should never happen due to button disabled state
-
-		const address = shuffleClientManager.address!;
-
-		// Check if user is opted in
-		let isOptedIn: boolean;
+		isExecuting = true;
 		try {
-			isOptedIn = true;
-			await shuffleClient.state.local(address).getAll();
-		} catch (error) {
-			isOptedIn = false;
+			// Get the app client (performs blockchain query to find deployed contract)
+			const shuffleClient = await shuffleClientManager.getAppClient();
+			if (!shuffleClient) return; // Should never happen due to button disabled state
+
+			const address = shuffleClientManager.address!;
+
+			// Check if user is opted in (404 error expected if not opted in yet)
+			let isOptedIn: boolean;
+			try {
+				await shuffleClient.state.local(address).getAll();
+				isOptedIn = true;
+			} catch {
+				isOptedIn = false;
+			}
+
+			// Build and send transaction group
+			const onCompleteCommitGroup = !isOptedIn
+				? shuffleClient.newGroup().optIn
+				: shuffleClient.newGroup();
+
+			await onCompleteCommitGroup
+				.commit({
+					args: { delay: 1, participants: 2, winners: 1 },
+					maxFee: microAlgos(10_000)
+				})
+				.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true });
+		} finally {
+			isExecuting = false;
 		}
-
-		// Build and send transaction group
-		const onCompleteCommitGroup = !isOptedIn
-			? shuffleClient.newGroup().optIn
-			: shuffleClient.newGroup();
-
-		await onCompleteCommitGroup
-			.commit({
-				args: { delay: 1, participants: 2, winners: 1 },
-				maxFee: microAlgos(10_000)
-			})
-			.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true });
 	};
 
 	/**
 	 * Handle reveal action. Type-safe: only called when wallet is connected.
 	 */
 	const handleReveal = async () => {
-		// Get the app client (performs blockchain query to find deployed contract)
-		const shuffleClient = await shuffleClientManager.getAppClient();
-		if (!shuffleClient) return; // Should never happen due to button disabled state
+		isExecuting = true;
+		try {
+			// Get the app client (performs blockchain query to find deployed contract)
+			const shuffleClient = await shuffleClientManager.getAppClient();
+			if (!shuffleClient) return; // Should never happen due to button disabled state
 
-		const randomness = await shuffleClient
-			.newGroup()
-			.closeOut.reveal({ args: {}, maxFee: microAlgos(10_000) })
-			.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true });
+			const randomness = await shuffleClient
+				.newGroup()
+				.closeOut.reveal({ args: {}, maxFee: microAlgos(10_000) })
+				.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true });
 
-		console.log(randomness.returns[0]?.winners);
+			console.log(randomness.returns[0]?.winners);
+		} finally {
+			isExecuting = false;
+		}
 	};
 </script>
 
 <div>
-	<button disabled={!shuffleClientManager.factory} onclick={handleCommit}>Commit</button>
-	<button disabled={!shuffleClientManager.factory} onclick={handleReveal}>Reveal</button>
+	<button disabled={!shuffleClientManager.factory || isExecuting} onclick={handleCommit}>
+		Commit
+	</button>
+	<button disabled={!shuffleClientManager.factory || isExecuting} onclick={handleReveal}>
+		Reveal
+	</button>
 </div>
