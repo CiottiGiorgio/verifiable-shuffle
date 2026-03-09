@@ -55,7 +55,9 @@ export function createShuffleClient() {
 		 * The shuffle factory, or null if no wallet is connected.
 		 * This is reactive and updates automatically when the wallet state changes.
 		 */
-		factory: shuffleFactory,
+		get factory() {
+			return shuffleFactory;
+		},
 
 		/**
 		 * Get the app client instance. Returns null if no wallet is connected.
