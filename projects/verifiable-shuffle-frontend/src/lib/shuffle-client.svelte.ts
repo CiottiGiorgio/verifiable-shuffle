@@ -1,6 +1,12 @@
 import { useWallet } from '@txnlab/use-wallet-svelte';
-import { VerifiableShuffleFactory, type VerifiableShuffleClient } from '../contracts/VerifiableShuffle.ts';
-import { getAlgodConfigFromSvelteEnvironment, getIndexerConfigFromSvelteEnvironment } from '$lib/config';
+import {
+	VerifiableShuffleFactory,
+	type VerifiableShuffleClient
+} from '../contracts/VerifiableShuffle.ts';
+import {
+	getAlgodConfigFromSvelteEnvironment,
+	getIndexerConfigFromSvelteEnvironment
+} from '$lib/config';
 import { AlgorandClient } from '@algorandfoundation/algokit-utils';
 import { PUBLIC_APP_CREATOR } from '$env/static/public';
 

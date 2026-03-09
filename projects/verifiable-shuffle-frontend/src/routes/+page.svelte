@@ -20,14 +20,9 @@
 
 			const address = shuffleClientManager.address!;
 
-			// Check if user is opted in (404 error expected if not opted in yet)
-			let isOptedIn: boolean;
-			try {
-				await shuffleClient.state.local(address).getAll();
-				isOptedIn = true;
-			} catch {
-				isOptedIn = false;
-			}
+			const isOptedIn = (
+				await shuffleClient.algorand.account.getInformation(address)
+			).appsLocalState?.find((state) => state.id === shuffleClient.appId) !== undefined;
 
 			// Build and send transaction group
 			const onCompleteCommitGroup = !isOptedIn
