@@ -7,6 +7,7 @@
 
 	// Track loading state to disable buttons during execution
 	let isExecuting = $state(false);
+	let latestRandomResult: number[] | undefined = $state(undefined);
 
 	/**
 	 * Handle commit action. Type-safe: only called when wallet is connected.
@@ -20,9 +21,10 @@
 
 			const address = shuffleClientManager.address!;
 
-			const isOptedIn = (
-				await shuffleClient.algorand.account.getInformation(address)
-			).appsLocalState?.find((state) => state.id === shuffleClient.appId) !== undefined;
+			const isOptedIn =
+				(await shuffleClient.algorand.account.getInformation(address)).appsLocalState?.find(
+					(state) => state.id === shuffleClient.appId
+				) !== undefined;
 
 			// Build and send transaction group
 			const onCompleteCommitGroup = !isOptedIn
@@ -55,7 +57,7 @@
 				.closeOut.reveal({ args: {}, maxFee: microAlgos(10_000) })
 				.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true });
 
-			console.log(randomness.returns[0]?.winners);
+			latestRandomResult = randomness.returns[0]?.winners;
 		} finally {
 			isExecuting = false;
 		}
@@ -69,4 +71,7 @@
 	<button disabled={!shuffleClientManager.factory || isExecuting} onclick={handleReveal}>
 		Reveal
 	</button>
+	{#if latestRandomResult}
+		<p>{latestRandomResult.join(', ')}</p>
+	{/if}
 </div>
