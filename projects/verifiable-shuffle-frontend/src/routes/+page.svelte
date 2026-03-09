@@ -1,45 +1,34 @@
 <script lang="ts">
-	import { useWallet } from '@txnlab/use-wallet-svelte';
-	import { VerifiableShuffleFactory } from '../contracts/VerifiableShuffle.ts';
-	import {
-		getAlgodConfigFromSvelteEnvironment,
-		getIndexerConfigFromSvelteEnvironment
-	} from '$lib/config';
-	import { AlgorandClient, microAlgos } from '@algorandfoundation/algokit-utils';
-	import { PUBLIC_APP_CREATOR } from '$env/static/public';
+	import { createShuffleClient } from '$lib/shuffle-client.svelte';
+	import { microAlgos } from '@algorandfoundation/algokit-utils';
 
-	const { activeAddress, transactionSigner } = useWallet();
+	// Reactive shuffle client that automatically updates when wallet state changes
+	const shuffleClientManager = createShuffleClient();
 
-	const algodConfig = getAlgodConfigFromSvelteEnvironment();
-	const indexerConfig = getIndexerConfigFromSvelteEnvironment();
-	const algorandClient = AlgorandClient.fromConfig({ algodConfig, indexerConfig });
-	algorandClient.setDefaultSigner(transactionSigner);
-
+	/**
+	 * Handle commit action. Type-safe: only called when wallet is connected.
+	 */
 	const handleCommit = async () => {
-		if (!activeAddress.current) {
-			alert('Please connect your wallet first.');
-			return;
-		}
+		// Get the app client (performs blockchain query to find deployed contract)
+		const shuffleClient = await shuffleClientManager.getAppClient();
+		if (!shuffleClient) return; // Should never happen due to button disabled state
 
-		const shuffleFactory = new VerifiableShuffleFactory({
-			algorand: algorandClient,
-			defaultSender: activeAddress.current
-		});
-		const shuffleClient = await shuffleFactory.getAppClientByCreatorAndName({
-			creatorAddress: PUBLIC_APP_CREATOR
-		});
+		const address = shuffleClientManager.address!;
 
+		// Check if user is opted in
 		let isOptedIn: boolean;
 		try {
 			isOptedIn = true;
-			await shuffleClient.state.local(activeAddress.current).getAll();
+			await shuffleClient.state.local(address).getAll();
 		} catch (error) {
 			isOptedIn = false;
 		}
 
+		// Build and send transaction group
 		const onCompleteCommitGroup = !isOptedIn
 			? shuffleClient.newGroup().optIn
 			: shuffleClient.newGroup();
+
 		await onCompleteCommitGroup
 			.commit({
 				args: { delay: 1, participants: 2, winners: 1 },
@@ -48,19 +37,13 @@
 			.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true });
 	};
 
+	/**
+	 * Handle reveal action. Type-safe: only called when wallet is connected.
+	 */
 	const handleReveal = async () => {
-		if (!activeAddress.current) {
-			alert('Please connect your wallet first.');
-			return;
-		}
-
-		const shuffleFactory = new VerifiableShuffleFactory({
-			algorand: algorandClient,
-			defaultSender: activeAddress.current
-		});
-		const shuffleClient = await shuffleFactory.getAppClientByCreatorAndName({
-			creatorAddress: PUBLIC_APP_CREATOR
-		});
+		// Get the app client (performs blockchain query to find deployed contract)
+		const shuffleClient = await shuffleClientManager.getAppClient();
+		if (!shuffleClient) return; // Should never happen due to button disabled state
 
 		const randomness = await shuffleClient
 			.newGroup()
@@ -72,6 +55,6 @@
 </script>
 
 <div>
-	<button onclick={handleCommit}>Commit</button>
-	<button onclick={handleReveal}>Reveal</button>
+	<button disabled={!shuffleClientManager.factory} onclick={handleCommit}>Commit</button>
+	<button disabled={!shuffleClientManager.factory} onclick={handleReveal}>Reveal</button>
 </div>
