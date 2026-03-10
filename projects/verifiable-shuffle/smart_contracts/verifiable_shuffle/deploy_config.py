@@ -23,7 +23,6 @@ def deploy() -> None:
     )
     from smart_contracts.artifacts.verifiable_shuffle.verifiable_shuffle_client import (
         CommitArgs,
-        Reveal,
         VerifiableShuffleFactory,
     )
     from smart_contracts.artifacts.verifiable_shuffle_opup.verifiable_shuffle_opup_client import (
@@ -129,20 +128,30 @@ def deploy() -> None:
     #  we could be waiting for the VRF off-the-chain service to upload the VRF result to the
     #  Randomness Beacon.
     @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
-    def reveal_with_retry() -> algokit_utils.SendAppTransactionResult[Reveal]:
-        return verifiable_shuffle_client.send.close_out.reveal(
+    def reveal_simulate_with_retry() -> None:
+        verifiable_shuffle_client.new_group().close_out.reveal(
             params=CommonAppCallParams(
-                app_references=[randomness_beacon, opup],
                 extra_fee=AlgoAmount(
                     micro_algo=((cfg.REVEAL_SINGLE_WINNER_OP_COST // 700) + 3)
                     * min_txn_fee
                 ),
                 sender=user_.address,
                 signer=user_.signer,
-            ),
-        )
+            )
+        ).simulate(skip_signatures=True, allow_unnamed_resources=True)
 
-    reveal = reveal_with_retry()
+    reveal_simulate_with_retry()
+
+    reveal = verifiable_shuffle_client.send.close_out.reveal(
+        params=CommonAppCallParams(
+            app_references=[randomness_beacon, opup],
+            extra_fee=AlgoAmount(
+                micro_algo=((cfg.REVEAL_SINGLE_WINNER_OP_COST // 700) + 3) * min_txn_fee
+            ),
+            sender=user_.address,
+            signer=user_.signer,
+        ),
+    )
 
     if not reveal.abi_return:
         raise ValueError("Expected reveal to return an ABI value.")
