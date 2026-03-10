@@ -5,7 +5,6 @@ import os
 import algokit_utils
 from algokit_utils import (
     AlgoAmount,
-    AppClientBareCallParams,
     AppClientCompilationParams,
     CommonAppCallParams,
 )
@@ -95,20 +94,17 @@ def deploy() -> None:
         min_funding_increment=AlgoAmount(algo=1),
     )
 
-    # Just in case something went wrong in previous deployment runs, and we didn't actually clear the state,
-    #  let's check if we are already opted in.
-    try:
-        verifiable_shuffle_client.state.local_state(user_.address).get_all()
-        logger.info(
-            "Cleaning up after a previous failed deployment. Called clear_state."
-        )
-        verifiable_shuffle_client.send.clear_state(
-            params=AppClientBareCallParams(sender=user_.address, signer=user_.signer)
-        )
-    except Exception:
-        pass
+    local_states = algorand.account.get_information(user_.address).apps_local_state  # type: ignore[misc]
+    is_not_opted_in = local_states is None or not any(  # type: ignore[misc]
+        s["id"] == verifiable_shuffle_client.app_id for s in local_states  # type: ignore[misc]
+    )
+    on_complete_commit_group = (
+        verifiable_shuffle_client.send.opt_in
+        if is_not_opted_in
+        else verifiable_shuffle_client.send
+    )
 
-    commitment = verifiable_shuffle_client.send.opt_in.commit(
+    commitment = on_complete_commit_group.commit(
         CommitArgs(
             delay=int(safety_gap),
             participants=2,
@@ -146,17 +142,7 @@ def deploy() -> None:
             ),
         )
 
-    try:
-        reveal = reveal_with_retry()
-    except:
-        verifiable_shuffle_client.send.clear_state(
-            params=AppClientBareCallParams(sender=user_.address, signer=user_.signer)
-        )
-        logger.info(
-            f"Called clear_state on {verifiable_shuffle_client.app_spec.name} "
-            f"({verifiable_shuffle_client.app_id}) "
-        )
-        raise
+    reveal = reveal_with_retry()
 
     if not reveal.abi_return:
         raise ValueError("Expected reveal to return an ABI value.")
