@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-    "build:cloudflare": "cp .env.template .env && npm run build",
+		"build:cloudflare": "cp .env.template .env && npm run build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -36,9 +36,13 @@
 		"vite-plugin-node-polyfills": "^0.25.0"
 	},
 	"dependencies": {
+		"@agoralabs-sh/avm-web-provider": "^1.7.0",
 		"@algorandfoundation/algokit-utils": "^9.2.0",
+		"@blockshake/defly-connect": "^1.2.1",
 		"@perawallet/connect": "^1.5.1",
 		"@txnlab/use-wallet-svelte": "^4.6.0",
+		"@walletconnect/modal": "^2.7.0",
+		"@walletconnect/sign-client": "^2.23.8",
 		"lute-connect": "^1.7.0"
 	}
 }
