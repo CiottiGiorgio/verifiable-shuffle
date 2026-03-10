@@ -1,14 +1,3 @@
 {
-  "recommendations": [
-    "EditorConfig.EditorConfig",
-    "dotenv.dotenv-vscode",
-    "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint",
-    "krysenlo.vite-plugin-eslint-problemmatcher",
-    "ms-playwright.playwright",
-    "Orta.vscode-jest",
-    "bradlc.vscode-tailwindcss",
-    "csstools.postcss",
-    ]
+	"recommendations": ["svelte.svelte-vscode", "esbenp.prettier-vscode", "dbaeumer.vscode-eslint"]
 }
-

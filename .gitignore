@@ -168,3 +168,5 @@ cython_debug/
 # NPM
 node_modules
 
+# Svelte standard lib folder
+!projects/verifiable-shuffle-frontend/src/lib
