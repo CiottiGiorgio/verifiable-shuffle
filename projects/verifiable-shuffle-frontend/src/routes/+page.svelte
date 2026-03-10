@@ -9,19 +9,19 @@
 	// Reactive shuffle client that automatically updates when wallet state changes
 	const { algorandClient, factory: shuffleAppFactory, getAppClient } = createShuffleClient();
 
-	const monitor = createBlockchainMonitor(
-		algorandClient.client.algod
-	);
+	const monitor = createBlockchainMonitor(algorandClient.client.algod);
 
 	// Track loading state to disable buttons during execution
 	let isExecuting = $state(false);
 	let latestRandomResult: number[] | undefined = $state();
+	let workflowStatus = $state('');
 
 	/**
 	 * Handle commit action. Type-safe: only called when wallet is connected.
 	 */
 	const handleWorkflow = async () => {
 		isExecuting = true;
+		workflowStatus = 'waiting to commit';
 		try {
 			// Get the app client (performs blockchain query to find deployed contract)
 			const shuffleClient = await getAppClient();
@@ -49,19 +49,33 @@
 			const targetRevealRound = (await shuffleClient.state.local(address).commitment())?.round;
 			if (!targetRevealRound) return; // Should never happen since a commit went through
 
+			workflowStatus = 'waiting for the target round';
 			while (monitor.round < targetRevealRound) {
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 			}
 
 			// We waited enough, but the randomness beacon could still not have uploaded the VRF for the target round.
-			const randomness = await retry(() =>
-				shuffleClient
+			workflowStatus = 'waiting for the randomness beacon to upload a VRF for that round';
+			await retry(async () => {
+				return await shuffleClient
 					.newGroup()
-					.closeOut.reveal({ args: {}, maxFee: microAlgos(10_000) })
-					.send({ populateAppCallResources: true, coverAppCallInnerTransactionFees: true })
-			);
+					.closeOut.reveal({ args: {}, extraFee: microAlgos(10_000) })
+					.simulate({ skipSignatures: true, allowUnnamedResources: true });
+			});
 
-			latestRandomResult = randomness.returns[0]?.winners;
+			workflowStatus = 'waiting to reveal';
+			const randomness = await shuffleClient.send.closeOut.reveal({
+				args: {},
+				maxFee: microAlgos(10_000),
+				populateAppCallResources: true,
+				coverAppCallInnerTransactionFees: true
+			});
+
+			latestRandomResult = randomness.return?.winners;
+			workflowStatus = 'revealed';
+		} catch (e) {
+			console.error(e);
+			workflowStatus = 'last attempt failed';
 		} finally {
 			isExecuting = false;
 		}
@@ -73,6 +87,9 @@
 	<button disabled={!shuffleAppFactory || isExecuting} onclick={handleWorkflow}>
 		Pick a winner
 	</button>
+	{#if workflowStatus}
+		<p>{workflowStatus}</p>
+	{/if}
 	{#if latestRandomResult}
 		<p>{latestRandomResult.join(', ')}</p>
 	{/if}

@@ -9,7 +9,7 @@
 export async function retry<T>(
 	fn: () => Promise<T>,
 	intervalMs: number = 3000,
-	maxTimeMs: number = 20000
+	maxTimeMs: number = 36000
 ): Promise<T> {
 	const startTime = Date.now();
 	let lastError: unknown;
