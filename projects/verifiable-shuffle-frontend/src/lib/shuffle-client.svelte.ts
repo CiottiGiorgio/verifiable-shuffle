@@ -17,6 +17,14 @@ import { PUBLIC_APP_CREATOR } from '$env/static/public';
 export function createShuffleClient() {
 	const { activeAddress, transactionSigner } = useWallet();
 
+	const algodConfig = getAlgodConfigFromSvelteEnvironment();
+	const indexerConfig = getIndexerConfigFromSvelteEnvironment();
+	const algorandClient = AlgorandClient.fromConfig({ algodConfig, indexerConfig });
+
+	// transactionSigner is a stable wrapper function from useWallet()
+	// that dynamically resolves the correct wallet at execution time.
+	algorandClient.setDefaultSigner(transactionSigner);
+
 	// Reactive state that updates when activeAddress changes
 	const shuffleFactory = $derived.by(() => {
 		const address = activeAddress.current;
@@ -25,15 +33,6 @@ export function createShuffleClient() {
 		if (!address) {
 			return null;
 		}
-
-		// Create a new AlgorandClient with updated signer
-		const algodConfig = getAlgodConfigFromSvelteEnvironment();
-		const indexerConfig = getIndexerConfigFromSvelteEnvironment();
-		const algorandClient = AlgorandClient.fromConfig({ algodConfig, indexerConfig });
-		
-		// transactionSigner is a stable wrapper function from useWallet()
-		// that dynamically resolves the correct wallet at execution time.
-		algorandClient.setDefaultSigner(transactionSigner);
 
 		// Return a factory configured with the current address
 		return new VerifiableShuffleFactory({
@@ -54,6 +53,13 @@ export function createShuffleClient() {
 
 	return {
 		/**
+		 * The AlgorandClient instance. This is stable and does not depend on the active address.
+		 */
+		get algorandClient() {
+			return algorandClient;
+		},
+
+		/**
 		 * The shuffle factory, or null if no wallet is connected.
 		 * This is reactive and updates automatically when the wallet state changes.
 		 */
@@ -65,13 +71,6 @@ export function createShuffleClient() {
 		 * Get the app client instance. Returns null if no wallet is connected.
 		 * This performs blockchain queries to find the latest deployed contract.
 		 */
-		getAppClient,
-
-		/**
-		 * The currently connected address, or null if no wallet is connected.
-		 */
-		get address() {
-			return activeAddress.current;
-		}
+		getAppClient
 	};
 }

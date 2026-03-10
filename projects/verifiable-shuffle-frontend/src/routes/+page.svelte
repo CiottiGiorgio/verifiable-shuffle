@@ -3,21 +3,19 @@
 	import { microAlgos } from '@algorandfoundation/algokit-utils';
 	import { createBlockchainMonitor } from '$lib/blockchain-monitor.svelte';
 	import { retry } from '$lib/retry';
+	import { useWallet } from '@txnlab/use-wallet-svelte';
 
+	const { activeAddress } = useWallet();
 	// Reactive shuffle client that automatically updates when wallet state changes
-	const shuffleClientManager = createShuffleClient();
+	const { algorandClient, factory: shuffleAppFactory, getAppClient } = createShuffleClient();
 
-	let roundMonitor: { readonly round: bigint } | undefined = $state();
+	const monitor = createBlockchainMonitor(
+		algorandClient.client.algod
+	);
 
 	// Track loading state to disable buttons during execution
 	let isExecuting = $state(false);
-	let latestRandomResult: number[] | undefined = $state(undefined);
-
-	$effect(() => {
-		if (shuffleClientManager.factory) {
-			roundMonitor = createBlockchainMonitor(shuffleClientManager.factory.algorand.client.algod);
-		}
-	});
+	let latestRandomResult: number[] | undefined = $state();
 
 	/**
 	 * Handle commit action. Type-safe: only called when wallet is connected.
@@ -26,10 +24,10 @@
 		isExecuting = true;
 		try {
 			// Get the app client (performs blockchain query to find deployed contract)
-			const shuffleClient = await shuffleClientManager.getAppClient();
+			const shuffleClient = await getAppClient();
 			if (!shuffleClient) return; // Should never happen due to button disabled state
 
-			const address = shuffleClientManager.address!;
+			const address = activeAddress.current!;
 
 			const isOptedIn =
 				(await shuffleClient.algorand.account.getInformation(address)).appsLocalState?.find(
@@ -51,8 +49,7 @@
 			const targetRevealRound = (await shuffleClient.state.local(address).commitment())?.round;
 			if (!targetRevealRound) return; // Should never happen since a commit went through
 
-			if (!roundMonitor) return; // Should never happen
-			while (roundMonitor.round < Number(targetRevealRound)) {
+			while (monitor.round < targetRevealRound) {
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 			}
 
@@ -72,7 +69,8 @@
 </script>
 
 <div>
-	<button disabled={!shuffleClientManager.factory || isExecuting} onclick={handleWorkflow}>
+	<p>round: {monitor.round}</p>
+	<button disabled={!shuffleAppFactory || isExecuting} onclick={handleWorkflow}>
 		Pick a winner
 	</button>
 	{#if latestRandomResult}
