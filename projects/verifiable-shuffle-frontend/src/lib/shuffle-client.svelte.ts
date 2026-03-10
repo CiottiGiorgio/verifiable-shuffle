@@ -17,13 +17,12 @@ import { PUBLIC_APP_CREATOR } from '$env/static/public';
 export function createShuffleClient() {
 	const { activeAddress, transactionSigner } = useWallet();
 
-	// Reactive state that updates when activeAddress or transactionSigner changes
+	// Reactive state that updates when activeAddress changes
 	const shuffleFactory = $derived.by(() => {
 		const address = activeAddress.current;
-		const signer = transactionSigner; // transactionSigner is the function itself, not a store
 
-		// Return null when no wallet connected - provides type-safe fail-fast behavior
-		if (!address || !signer) {
+		// If there is no active address, we cannot sign or identify the sender.
+		if (!address) {
 			return null;
 		}
 
@@ -31,7 +30,10 @@ export function createShuffleClient() {
 		const algodConfig = getAlgodConfigFromSvelteEnvironment();
 		const indexerConfig = getIndexerConfigFromSvelteEnvironment();
 		const algorandClient = AlgorandClient.fromConfig({ algodConfig, indexerConfig });
-		algorandClient.setDefaultSigner(signer);
+		
+		// transactionSigner is a stable wrapper function from useWallet()
+		// that dynamically resolves the correct wallet at execution time.
+		algorandClient.setDefaultSigner(transactionSigner);
 
 		// Return a factory configured with the current address
 		return new VerifiableShuffleFactory({
