@@ -21,7 +21,7 @@
 <header>
 	<nav>
 		<div class="logo">
-			<a href="/">Verifiable Shuffle</a>
+			<span>Verifiable Shuffle</span>
 		</div>
 		<div class="actions">
 			<WalletButton />
@@ -54,7 +54,7 @@
 		margin: 0 auto;
 	}
 
-	.logo a {
+	.logo span {
 		font-weight: bold;
 		font-size: 1.25rem;
 		text-decoration: none;
