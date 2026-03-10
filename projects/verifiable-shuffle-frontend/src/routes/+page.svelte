@@ -172,11 +172,6 @@
 		padding: 0.5rem;
 		border-radius: 4px;
 	}
-	.buffer-note {
-		font-size: 0.75rem;
-		color: #888;
-		margin-top: 0.25rem;
-	}
 	.status {
 		font-style: italic;
 		color: #666;
