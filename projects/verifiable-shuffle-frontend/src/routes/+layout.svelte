@@ -6,7 +6,7 @@
 	// Create manager instance (moved from wallet-button.svelte)
 	useWalletContext(
 		new WalletManager({
-			wallets: [WalletId.LUTE],
+			wallets: [WalletId.LUTE, WalletId.PERA],
 			defaultNetwork: NetworkId.TESTNET
 		})
 	);
