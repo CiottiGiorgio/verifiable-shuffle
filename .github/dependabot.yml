@@ -9,6 +9,10 @@ updates:
         update-types:
           - minor
           - patch
+      security-patches:
+        patterns:
+          - "*"
+        applies-to: security-updates
   - package-ecosystem: npm
     directory: /projects/verifiable-shuffle-frontend
     schedule:
@@ -18,3 +22,7 @@ updates:
         update-types:
           - minor
           - patch
+      security-patches:
+        patterns:
+          - "*"
+        applies-to: security-updates
