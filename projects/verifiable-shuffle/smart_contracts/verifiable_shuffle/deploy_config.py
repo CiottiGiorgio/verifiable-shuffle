@@ -129,6 +129,7 @@ def deploy() -> None:
     #  Randomness Beacon.
     @retry(stop=stop_after_attempt(21), wait=wait_fixed(3))  # type: ignore[misc]
     def reveal_simulate_with_retry() -> None:
+        algorand.get_suggested_params()  # it seems necessary to prevent transaction out of round
         verifiable_shuffle_client.new_group().close_out.reveal(
             params=CommonAppCallParams(
                 extra_fee=AlgoAmount(
@@ -141,7 +142,9 @@ def deploy() -> None:
         ).simulate(skip_signatures=True, allow_unnamed_resources=True)
 
     reveal_simulate_with_retry()
+    logger.info("Simulated reveal successfully")
 
+    algorand.get_suggested_params()  # it seems necessary to prevent transaction out of round
     reveal = verifiable_shuffle_client.send.close_out.reveal(
         params=CommonAppCallParams(
             app_references=[randomness_beacon, opup],
