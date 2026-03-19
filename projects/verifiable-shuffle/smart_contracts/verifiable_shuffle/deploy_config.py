@@ -137,6 +137,7 @@ def deploy() -> None:
                 ),
                 sender=user_.address,
                 signer=user_.signer,
+                validity_window=100,
             )
         ).simulate(skip_signatures=True, allow_unnamed_resources=True)
 
