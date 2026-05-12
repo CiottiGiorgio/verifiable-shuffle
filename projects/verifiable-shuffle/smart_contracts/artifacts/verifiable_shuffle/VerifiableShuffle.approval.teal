@@ -829,16 +829,15 @@ reveal_for_header@27:
     b|
     dig 21
     dup
-    uncover 2
-    concat // on error: max array length exceeded
-    swap
     intc_1 // 0
     extract_uint16
     intc_0 // 1
     +
     itob
-    extract 6 2
+    extract 6 0
     replace2 0
+    swap
+    concat
     bury 21
     dig 15
     intc_0 // 1
@@ -888,16 +887,15 @@ reveal_after_if_else@40:
     extract 4 4
     dig 20
     dup
-    uncover 2
-    concat // on error: max array length exceeded
-    swap
     intc_1 // 0
     extract_uint16
     intc_0 // 1
     +
     itob
-    extract 6 2
+    extract 6 0
     replace2 0
+    swap
+    concat
     bury 20
     bz reveal_else_body@18
     dig 12
@@ -1020,16 +1018,15 @@ reveal_while_top@36:
     b|
     dig 21
     dup
-    uncover 2
-    concat // on error: max array length exceeded
-    swap
     intc_1 // 0
     extract_uint16
     intc_0 // 1
     +
     itob
-    extract 6 2
+    extract 6 0
     replace2 0
+    swap
+    concat
     bury 21
     dig 15
     intc_0 // 1
@@ -1075,16 +1072,15 @@ reveal_after_for@21:
     extract 4 4
     dig 18
     dup
-    uncover 2
-    concat // on error: max array length exceeded
-    swap
     intc_1 // 0
     extract_uint16
     intc_0 // 1
     +
     itob
-    extract 6 2
+    extract 6 0
     replace2 0
+    swap
+    concat
     bury 18
 
 reveal_after_if_else@23:
