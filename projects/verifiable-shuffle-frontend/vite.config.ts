@@ -8,7 +8,8 @@ export default defineConfig({
 		nodePolyfills({
 			globals: {
 				Buffer: true
-			}
+			},
+			exclude: ['module']
 		})
 	]
 });
