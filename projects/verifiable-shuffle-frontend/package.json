@@ -35,7 +35,7 @@
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.0.16",
 		"vite-plugin-node-polyfills": "^0.28.0",
-		"wrangler": "^4.97.0"
+		"wrangler": "^4.103.0"
 	},
 	"dependencies": {
 		"@agoralabs-sh/avm-web-provider": "^1.7.0",
