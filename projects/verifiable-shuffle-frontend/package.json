@@ -19,23 +19,23 @@
 	"devDependencies": {
 		"@eslint/compat": "^2.1.0",
 		"@eslint/js": "^10.0.1",
-		"@sveltejs/adapter-cloudflare": "^7.2.6",
-		"@sveltejs/kit": "^2.61.1",
+		"@sveltejs/adapter-cloudflare": "^7.2.9",
+		"@sveltejs/kit": "^2.69.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@types/node": "^25",
-		"eslint": "^10.4.1",
+		"eslint": "^10.6.0",
 		"eslint-config-prettier": "^10.1.8",
-		"eslint-plugin-svelte": "^3.19.0",
-		"globals": "^17.6.0",
-		"prettier": "^3.8.3",
-		"prettier-plugin-svelte": "^4.1.0",
-		"svelte": "^5.56.1",
-		"svelte-check": "^4.5.0",
+		"eslint-plugin-svelte": "^3.20.0",
+		"globals": "^17.7.0",
+		"prettier": "^3.9.4",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte": "^5.56.4",
+		"svelte-check": "^4.7.1",
 		"typescript": "^6.0.3",
-		"typescript-eslint": "^8.60.1",
-		"vite": "^8.0.16",
+		"typescript-eslint": "^8.62.1",
+		"vite": "^8.1.2",
 		"vite-plugin-node-polyfills": "^0.28.0",
-		"wrangler": "^4.103.0"
+		"wrangler": "^4.106.0"
 	},
 	"dependencies": {
 		"@agoralabs-sh/avm-web-provider": "^1.7.0",
@@ -44,7 +44,7 @@
 		"@perawallet/connect": "^1.5.2",
 		"@txnlab/use-wallet-svelte": "^4.6.0",
 		"@walletconnect/modal": "^2.7.0",
-		"@walletconnect/sign-client": "^2.23.9",
+		"@walletconnect/sign-client": "^2.23.10",
 		"lute-connect": "^1.7.0"
 	}
 }
