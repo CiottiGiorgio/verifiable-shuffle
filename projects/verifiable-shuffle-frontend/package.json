@@ -45,6 +45,6 @@
 		"@txnlab/use-wallet-svelte": "^4.6.0",
 		"@walletconnect/modal": "^2.7.0",
 		"@walletconnect/sign-client": "^2.23.10",
-		"lute-connect": "^1.7.0"
+		"lute-connect": "^2.0.1"
 	}
 }
