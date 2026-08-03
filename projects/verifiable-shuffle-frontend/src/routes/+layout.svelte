@@ -1,12 +1,14 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
-	import { WalletManager, WalletId, NetworkId, useWalletContext } from '@txnlab/use-wallet-svelte';
+	import { WalletManager, NetworkId, useWalletContext } from '@txnlab/use-wallet-svelte';
+	import { lute } from '@txnlab/use-wallet-lute';
+	import { pera } from '@txnlab/use-wallet-pera';
 	import WalletButton from '../components/wallet-button.svelte';
 
 	// Create manager instance (moved from wallet-button.svelte)
 	useWalletContext(
 		new WalletManager({
-			wallets: [WalletId.LUTE, WalletId.PERA],
+			wallets: [lute({ siteName: 'Verifiable Shuffle' }), pera()],
 			defaultNetwork: NetworkId.TESTNET
 		})
 	);
