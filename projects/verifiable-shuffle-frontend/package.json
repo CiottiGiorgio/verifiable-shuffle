@@ -45,7 +45,7 @@
 		"@perawallet/connect": "^1.6.0",
 		"@txnlab/use-wallet-lute": "^5.0.0",
 		"@txnlab/use-wallet-pera": "^5.0.0",
-		"@txnlab/use-wallet-svelte": "^5.0.0-rc.2",
+		"@txnlab/use-wallet-svelte": "^5.0.0",
 		"@walletconnect/modal": "^2.7.0",
 		"@walletconnect/sign-client": "^2.24.0",
 		"algosdk": "^3.7.0",
