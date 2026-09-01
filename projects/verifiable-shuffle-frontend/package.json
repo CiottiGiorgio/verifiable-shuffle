@@ -43,7 +43,7 @@
 		"@algorandfoundation/algokit-utils": "^9.2.0",
 		"@blockshake/defly-connect": "^1.2.1",
 		"@perawallet/connect": "^1.6.0",
-		"@txnlab/use-wallet-lute": "^5.0.0-rc.2",
+		"@txnlab/use-wallet-lute": "^5.0.0",
 		"@txnlab/use-wallet-pera": "^5.0.0",
 		"@txnlab/use-wallet-svelte": "^5.0.0-rc.2",
 		"@walletconnect/modal": "^2.7.0",
